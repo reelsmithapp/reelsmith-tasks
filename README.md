@@ -1,238 +1,320 @@
-# ReelSmith Kanban Board
+# ReelSmith Tasks
 
-A professional, cinematic-themed Kanban board for managing ReelSmith marketing tasks, product development, and strategic initiatives.
+Full-stack task management system for ReelSmith - tracking marketing, development, and strategic initiatives with persistent database storage.
 
-![ReelSmith Kanban](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-![React](https://img.shields.io/badge/React-18.2-blue)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
-![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.4-06B6D4)
+## 🚀 Features
 
-## ✨ Features
+- **Full-Stack Architecture**: React frontend + Hono.js backend + PostgreSQL database
+- **Real-time Task Management**: Create, update, move, and delete tasks with instant sync
+- **Offline Support**: LocalStorage fallback when API is unavailable
+- **Mobile-Responsive**: Optimized for desktop and mobile devices
+- **Drag & Drop**: Intuitive kanban board interface
+- **CLI Access**: Command-line tool for programmatic task management
+- **REST API**: Full API for automation and integrations
+- **Export Functionality**: Export tasks as JSON or Markdown
+- **Filtering & Search**: Filter by priority, category, assignee, and search
+- **Categories**: Marketing, Product, Research, Automation
+- **Assignees**: Arun (human) and Arc (AI agent)
+- **Status Tracking**: Backlog, In Progress, Done, Blocked/Waiting
 
-- **📋 Four Column Layout**: Backlog, In Progress, Done, Blocked/Waiting
-- **🎨 Dark Cinematic Theme**: ReelSmith brand colors (blues, grays)
-- **🖱️ Drag & Drop**: Smooth task movement between columns
-- **🔍 Advanced Filtering**: Search, priority, category, and assignee filters
-- **💾 Auto-Save**: LocalStorage persistence with instant save
-- **📤 Export/Import**: JSON and Markdown export, JSON import
-- **⌨️ Keyboard Shortcuts**: Quick actions without mouse
-- **📱 Responsive Design**: Works beautifully on mobile and desktop
-- **🎯 Task Management**:
-  - Priority levels (High, Medium, Low) with color coding
-  - Category tags (Marketing, Product, Research, Automation)
-  - Assignees (Arun, Arc)
-  - Due dates with overdue indicators
-  - Rich markdown descriptions
-  - Archive completed tasks
+## 📋 Tech Stack
 
-## 🚀 Quick Start
+**Frontend:**
+- React 18 with TypeScript
+- Vite for fast builds
+- Tailwind CSS for styling
+- React Beautiful DnD for drag and drop
+- Date-fns for date formatting
+
+**Backend:**
+- Hono.js (lightweight, fast web framework)
+- Drizzle ORM for type-safe database queries
+- Neon PostgreSQL (serverless)
+- Zod for validation
+
+**Deployment:**
+- Railway (single service deployment)
+- Neon DB (separate managed database)
+
+## 🛠️ Installation & Setup
 
 ### Prerequisites
 
-- Node.js 18+ and npm
-- Modern web browser
+- Node.js 20+ and npm
+- Neon PostgreSQL account (free tier available)
+- Railway account (for deployment)
 
-### Installation
+### Local Development
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/reelsmithapp/reelsmith-tasks.git
+   cd reelsmith-tasks
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` with your Neon database connection string:
+   ```
+   DATABASE_URL=postgresql://user:password@host.neon.tech/reelsmith_tasks?sslmode=require
+   PORT=3000
+   NODE_ENV=development
+   FRONTEND_URL=http://localhost:5173
+   ```
+
+4. **Set up database:**
+   ```bash
+   # Generate migration files
+   npm run db:generate
+   
+   # Push schema to database
+   npm run db:push
+   
+   # (Optional) Open Drizzle Studio to view database
+   npm run db:studio
+   ```
+
+5. **Run development servers:**
+   ```bash
+   # Run both frontend and backend concurrently
+   npm run dev:all
+   
+   # Or run separately:
+   npm run dev      # Frontend on http://localhost:5173
+   npm run dev:api  # Backend on http://localhost:3000
+   ```
+
+6. **Access the application:**
+   - Frontend: http://localhost:5173
+   - API: http://localhost:3000
+   - API Health: http://localhost:3000/
+
+## 🌐 API Documentation
+
+See [API.md](./API.md) for detailed endpoint documentation.
+
+### Quick API Examples
+
+**Get all tasks:**
+```bash
+curl http://localhost:3000/api/tasks
+```
+
+**Create a task:**
+```bash
+curl -X POST http://localhost:3000/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Launch marketing campaign",
+    "description": "Create social media posts",
+    "status": "backlog",
+    "priority": "high",
+    "category": "marketing",
+    "assignee": "Arun"
+  }'
+```
+
+**Move a task:**
+```bash
+curl -X PATCH http://localhost:3000/api/tasks/{id}/move \
+  -H "Content-Type: application/json" \
+  -d '{"status": "in-progress"}'
+```
+
+## 🖥️ CLI Tool Usage
+
+The CLI tool provides programmatic access for Arc (AI agent) and automation scripts.
+
+### Available Commands
+
+**List all tasks:**
+```bash
+npm run cli list
+```
+
+**Filter tasks:**
+```bash
+npm run cli list --status=in-progress
+npm run cli list --priority=high
+npm run cli list --category=marketing
+npm run cli list --assignee=Arc
+```
+
+**Create a new task:**
+```bash
+npm run cli add "Task title" \
+  --category=marketing \
+  --assignee=Arc \
+  --priority=high \
+  --description="Task details" \
+  --due=2024-12-31
+```
+
+**Update a task:**
+```bash
+npm run cli update {task-id} \
+  --status=done \
+  --priority=low
+```
+
+**Move a task:**
+```bash
+npm run cli move {task-id} in-progress
+```
+
+**Show task details:**
+```bash
+npm run cli show {task-id}
+```
+
+**Delete a task:**
+```bash
+npm run cli delete {task-id}
+```
+
+### CLI for Arc (AI Agent)
+
+Arc can use the CLI to manage tasks programmatically:
 
 ```bash
-# Clone the repository
-git clone https://github.com/reelsmithapp/reelsmith-kanban.git
-cd reelsmith-kanban
+# List Arc's tasks
+npm run cli list --assignee=Arc
 
-# Install dependencies
-npm install
+# Create a task for Arc
+npm run cli add "Research competitor features" \
+  --category=research \
+  --assignee=Arc \
+  --priority=medium
 
-# Start development server
-npm run dev
-```
-
-The app will be available at `http://localhost:3000`
-
-### Build for Production
-
-```bash
-# Build optimized production bundle
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-## 🎮 Usage
-
-### Keyboard Shortcuts
-
-- **`N`** - Create new task
-- **`A`** - Archive completed tasks
-- **`/`** - Focus search bar
-
-### Managing Tasks
-
-1. **Create Task**: Click "New Task" button or press `N`
-2. **Edit Task**: Click edit icon on any task card
-3. **Move Task**: Drag and drop between columns
-4. **Delete Task**: Click delete icon (confirmation required)
-5. **Filter Tasks**: Use filter bar to narrow down view
-6. **Export Data**: Click Export → Choose JSON or Markdown
-7. **Import Data**: Click Import → Select JSON file
-
-### Task Properties
-
-- **Title** (required): Short task description
-- **Description**: Detailed information (Markdown supported)
-- **Status**: Backlog, In Progress, Done, Blocked/Waiting
-- **Priority**: High (red), Medium (yellow), Low (green)
-- **Category**: Marketing, Product, Research, Automation
-- **Assignee**: Arun or Arc
-- **Due Date**: Optional deadline with overdue tracking
-
-## 📁 Project Structure
-
-```
-reelsmith-kanban/
-├── src/
-│   ├── components/          # React components
-│   │   ├── Column.tsx       # Kanban column component
-│   │   ├── TaskCard.tsx     # Individual task card
-│   │   ├── TaskModal.tsx    # Add/Edit task modal
-│   │   ├── FilterBar.tsx    # Filtering interface
-│   │   └── Header.tsx       # App header with actions
-│   ├── hooks/               # Custom React hooks
-│   │   ├── useKanban.ts     # Kanban state management
-│   │   └── useKeyboardShortcuts.ts
-│   ├── types/               # TypeScript type definitions
-│   │   └── index.ts
-│   ├── utils/               # Utility functions
-│   │   ├── storage.ts       # LocalStorage & export/import
-│   │   ├── filters.ts       # Task filtering logic
-│   │   └── helpers.ts       # General helpers
-│   ├── App.tsx              # Main application component
-│   ├── main.tsx             # React entry point
-│   └── index.css            # Global styles
-├── public/                  # Static assets
-├── index.html               # HTML template
-├── package.json             # Dependencies
-├── tsconfig.json            # TypeScript config
-├── tailwind.config.js       # Tailwind CSS config
-├── vite.config.ts           # Vite build config
-├── README.md                # This file
-└── PROJECT-SPEC.md          # Detailed architecture docs
-```
-
-## 🎨 Design System
-
-### Colors
-
-- **Dark Background**: `#0a0e17` (reel-dark)
-- **Card Background**: `#1e293b` (reel-gray)
-- **Primary Blue**: `#3b82f6` (reel-blue-light)
-- **Accent Purple**: `#8b5cf6` (reel-accent)
-
-### Typography
-
-- **Font Family**: Inter (Google Fonts)
-- **Weights**: 300, 400, 500, 600, 700
-
-## 🔧 Tech Stack
-
-- **React 18.2** - UI library
-- **TypeScript 5.3** - Type safety
-- **Vite 5.1** - Build tool
-- **Tailwind CSS 3.4** - Styling
-- **React Beautiful DnD 13.1** - Drag and drop
-- **React Icons 5.0** - Icon library
-- **date-fns 3.3** - Date formatting
-
-## 📦 Dependencies
-
-### Core
-
-```json
-{
-  "react": "^18.2.0",
-  "react-dom": "^18.2.0",
-  "react-beautiful-dnd": "^13.1.1",
-  "react-icons": "^5.0.1",
-  "date-fns": "^3.3.1"
-}
-```
-
-### Dev Dependencies
-
-```json
-{
-  "@vitejs/plugin-react": "^4.2.1",
-  "typescript": "^5.3.3",
-  "tailwindcss": "^3.4.1",
-  "vite": "^5.1.0"
-}
+# Move task to done when complete
+npm run cli move {task-id} done
 ```
 
 ## 🚢 Deployment
 
-### Deploy to Vercel
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
+
+### Quick Railway Deployment
+
+1. **Create a new Railway project**
+2. **Add Neon PostgreSQL:**
+   - Go to your Neon project
+   - Copy the connection string
+3. **Deploy to Railway:**
+   ```bash
+   # Install Railway CLI
+   npm install -g @railway/cli
+   
+   # Login
+   railway login
+   
+   # Link project
+   railway link
+   
+   # Set environment variables
+   railway variables set DATABASE_URL=your_neon_connection_string
+   railway variables set NODE_ENV=production
+   railway variables set FRONTEND_URL=https://your-railway-app.railway.app
+   
+   # Deploy
+   railway up
+   ```
+
+4. **Access your deployed app:**
+   - Railway will provide a public URL
+   - Update `FRONTEND_URL` environment variable with the Railway URL
+
+## 📱 Mobile Usage
+
+ReelSmith Tasks is fully responsive and optimized for mobile devices:
+
+- **Touch-friendly**: Large tap targets for mobile interaction
+- **Responsive Layout**: Columns stack on small screens
+- **Swipe Navigation**: Horizontal scroll for kanban columns
+- **Mobile Keyboard**: Optimized input fields
+- **Offline Mode**: Works without internet connection
+
+**Recommended Mobile Browsers:**
+- iOS: Safari 14+
+- Android: Chrome 90+
+
+## 🧪 Testing
 
 ```bash
-# Install Vercel CLI
-npm i -g vercel
+# Type checking
+npm run lint
 
-# Deploy
-vercel
-```
-
-### Deploy to Netlify
-
-```bash
-# Build the project
+# Build verification
 npm run build
 
-# Deploy dist folder to Netlify
+# Test both builds
+npm run build:frontend
+npm run build:api
 ```
 
-### Deploy to GitHub Pages
+## 📂 Project Structure
 
-Add to `package.json`:
-
-```json
-{
-  "scripts": {
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
-  }
-}
+```
+reelsmith-tasks/
+├── src/                    # Frontend source
+│   ├── components/         # React components
+│   ├── services/           # API client
+│   ├── types/              # TypeScript types
+│   └── utils/              # Utilities
+├── server/                 # Backend source
+│   ├── db/                 # Database schema & connection
+│   ├── routes/             # API routes
+│   └── index.ts            # Server entry point
+├── cli.ts                  # CLI tool
+├── dist/                   # Built files
+├── docs/                   # Additional documentation
+├── .env.example            # Environment template
+├── drizzle.config.ts       # Drizzle ORM config
+├── package.json            # Dependencies & scripts
+├── railway.json            # Railway deployment config
+└── tsconfig.json           # TypeScript config
 ```
 
-Update `vite.config.ts`:
+## 🔧 Environment Variables
 
-```typescript
-export default defineConfig({
-  base: '/reelsmith-kanban/',
-  // ... rest of config
-})
-```
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | Neon PostgreSQL connection string | `postgresql://user:pass@host.neon.tech/db` |
+| `PORT` | Backend API port | `3000` |
+| `NODE_ENV` | Environment (development/production) | `production` |
+| `FRONTEND_URL` | Frontend URL for CORS | `https://app.railway.app` |
+| `VITE_API_URL` | Frontend API endpoint | `https://api.railway.app` |
 
 ## 🤝 Contributing
 
-This is an internal tool for ReelSmith. Contributions are welcome!
+This is a private project for ReelSmith. For issues or feature requests, contact the development team.
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+## 📄 License
 
-## 📝 License
+MIT License - see LICENSE file for details
 
-Copyright © 2024 ReelSmith. All rights reserved.
+## 🔗 Links
 
-## 🎬 About ReelSmith
+- **GitHub**: https://github.com/reelsmithapp/reelsmith-tasks
+- **API Documentation**: [API.md](./API.md)
+- **Deployment Guide**: [DEPLOYMENT.md](./DEPLOYMENT.md)
+- **ReelSmith Main**: https://reelsmith.app
 
-ReelSmith is building the future of AI-powered film production. This Kanban board helps us stay organized as we launch our platform.
+## 📞 Support
 
-**Team:**
-- Arun - Founder & CEO
-- Arc - AI Assistant & Automation Lead
+For questions or issues:
+- Create an issue on GitHub
+- Contact: reelsmith.app@gmail.com
+- Twitter: [@ReelSmithApp](https://twitter.com/ReelSmithApp)
 
 ---
 
-Built with ❤️ by the ReelSmith team
+**Built with ❤️ by the ReelSmith Team**

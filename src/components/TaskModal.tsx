@@ -5,11 +5,18 @@ import { Task, TaskStatus, TaskPriority, TaskCategory, Assignee } from '../types
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (taskData: Omit<Task, 'id' | 'createdAt'>) => void;
+  onSave: (taskData: Partial<Task>) => void | Promise<void>;
+  task?: Task;
+  initialColumnId?: TaskStatus;
+}
+
+// Backwards compatibility
+type TaskModalPropsLegacy = TaskModalProps & {
   initialTask?: Task;
 }
 
-export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, initialTask }) => {
+export const TaskModal: React.FC<TaskModalPropsLegacy> = ({ isOpen, onClose, onSave, task, initialTask, initialColumnId }) => {
+  const editingTask = task || initialTask;
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<TaskStatus>('backlog');
@@ -19,25 +26,25 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, i
   const [dueDate, setDueDate] = useState('');
 
   useEffect(() => {
-    if (initialTask) {
-      setTitle(initialTask.title);
-      setDescription(initialTask.description);
-      setStatus(initialTask.status);
-      setPriority(initialTask.priority);
-      setCategory(initialTask.category);
-      setAssignee(initialTask.assignee);
-      setDueDate(initialTask.dueDate ? initialTask.dueDate.split('T')[0] : '');
+    if (editingTask) {
+      setTitle(editingTask.title);
+      setDescription(editingTask.description);
+      setStatus(editingTask.status);
+      setPriority(editingTask.priority);
+      setCategory(editingTask.category);
+      setAssignee(editingTask.assignee);
+      setDueDate(editingTask.dueDate ? editingTask.dueDate.split('T')[0] : '');
     } else {
       // Reset form
       setTitle('');
       setDescription('');
-      setStatus('backlog');
+      setStatus(initialColumnId || 'backlog');
       setPriority('medium');
       setCategory('product');
       setAssignee('Arun');
       setDueDate('');
     }
-  }, [initialTask, isOpen]);
+  }, [editingTask, initialColumnId, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +58,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, i
       category,
       assignee,
       dueDate: dueDate || undefined,
-      archived: initialTask?.archived,
+      updatedAt: new Date().toISOString(),
+      archived: editingTask?.archived,
     });
 
     onClose();
@@ -65,7 +73,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, i
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-reel-gray">
           <h2 className="text-2xl font-semibold text-white">
-            {initialTask ? 'Edit Task' : 'New Task'}
+            {editingTask ? 'Edit Task' : 'New Task'}
           </h2>
           <button
             onClick={onClose}

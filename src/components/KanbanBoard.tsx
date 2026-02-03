@@ -5,30 +5,120 @@ import { TaskModal } from './TaskModal';
 import { FilterBar } from './FilterBar';
 import { Task, Filters, KanbanData, ColumnId } from '../types';
 import { getInitialData } from '../utils/initialData';
-import { saveToStorage, loadFromStorage, exportToJSON, exportToMarkdown, importFromJSON } from '../utils/storage';
-import { FiPlus, FiFilm } from 'react-icons/fi';
+import { api, saveOffline, loadOffline } from '../services/api';
+import { FiPlus, FiFilm, FiWifiOff, FiRefreshCw } from 'react-icons/fi';
 
 export const KanbanBoard: React.FC = () => {
-  const [data, setData] = useState<KanbanData>(() => {
-    const saved = loadFromStorage();
-    return saved || getInitialData();
-  });
-
+  const [data, setData] = useState<KanbanData>(getInitialData);
   const [filters, setFilters] = useState<Filters>({
     priority: 'all',
     category: 'all',
     assignee: 'all',
     search: '',
   });
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [modalInitialColumn, setModalInitialColumn] = useState<ColumnId>('backlog');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Auto-save to localStorage on data change
+  // Load tasks from API on mount
   useEffect(() => {
-    saveToStorage(data);
-  }, [data]);
+    loadTasks();
+  }, []);
+
+  const loadTasks = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await api.getTasks();
+      
+      if (response.success && response.data) {
+        const tasks = response.data;
+        
+        // Organize tasks into columns
+        const columns = [
+          {
+            id: 'backlog' as ColumnId,
+            title: 'Backlog',
+            icon: '📋',
+            tasks: tasks.filter(t => t.status === 'backlog'),
+          },
+          {
+            id: 'in-progress' as ColumnId,
+            title: 'In Progress',
+            icon: '🔄',
+            tasks: tasks.filter(t => t.status === 'in-progress'),
+          },
+          {
+            id: 'done' as ColumnId,
+            title: 'Done',
+            icon: '✅',
+            tasks: tasks.filter(t => t.status === 'done'),
+          },
+          {
+            id: 'blocked' as ColumnId,
+            title: 'Blocked/Waiting',
+            icon: '⏸️',
+            tasks: tasks.filter(t => t.status === 'blocked'),
+          },
+        ];
+        
+        setData({
+          columns,
+          lastUpdated: new Date().toISOString(),
+        });
+        
+        // Save to offline storage as backup
+        saveOffline(tasks);
+        setIsOnline(true);
+      }
+    } catch (err) {
+      console.error('Failed to load tasks from API:', err);
+      setError('Failed to connect to server. Loading offline data...');
+      setIsOnline(false);
+      
+      // Fallback to offline data
+      const offlineTasks = loadOffline();
+      if (offlineTasks && offlineTasks.length > 0) {
+        const columns = [
+          {
+            id: 'backlog' as ColumnId,
+            title: 'Backlog',
+            icon: '📋',
+            tasks: offlineTasks.filter(t => t.status === 'backlog'),
+          },
+          {
+            id: 'in-progress' as ColumnId,
+            title: 'In Progress',
+            icon: '🔄',
+            tasks: offlineTasks.filter(t => t.status === 'in-progress'),
+          },
+          {
+            id: 'done' as ColumnId,
+            title: 'Done',
+            icon: '✅',
+            tasks: offlineTasks.filter(t => t.status === 'done'),
+          },
+          {
+            id: 'blocked' as ColumnId,
+            title: 'Blocked/Waiting',
+            icon: '⏸️',
+            tasks: offlineTasks.filter(t => t.status === 'blocked'),
+          },
+        ];
+        
+        setData({
+          columns,
+          lastUpdated: new Date().toISOString(),
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -50,7 +140,7 @@ export const KanbanBoard: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [isModalOpen]);
 
-  const handleDragEnd = (result: DropResult) => {
+  const handleDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
     if (!destination) return;
@@ -66,19 +156,17 @@ export const KanbanBoard: React.FC = () => {
     const task = sourceColumn.tasks.find(t => t.id === draggableId);
     if (!task) return;
 
-    // Create new columns array with updated tasks
+    // Optimistic update
     const newColumns = data.columns.map(column => {
       if (column.id === source.droppableId) {
-        // Remove from source
         return {
           ...column,
           tasks: column.tasks.filter(t => t.id !== draggableId),
         };
       }
       if (column.id === destination.droppableId) {
-        // Add to destination
         const newTasks = Array.from(column.tasks);
-        const updatedTask = { ...task, columnId: destination.droppableId as ColumnId };
+        const updatedTask = { ...task, status: destination.droppableId as Task['status'] };
         newTasks.splice(destination.index, 0, updatedTask);
         return {
           ...column,
@@ -92,74 +180,72 @@ export const KanbanBoard: React.FC = () => {
       columns: newColumns,
       lastUpdated: new Date().toISOString(),
     });
+
+    // Update on server
+    try {
+      await api.moveTask(draggableId, destination.droppableId as Task['status']);
+    } catch (err) {
+      console.error('Failed to update task on server:', err);
+      setError('Failed to save changes. Working offline.');
+      // Revert on error - reload from server or offline
+      loadTasks();
+    }
   };
 
-  const handleSaveTask = (taskData: Partial<Task>) => {
-    if (editingTask) {
-      // Update existing task
-      const newColumns = data.columns.map(column => ({
-        ...column,
-        tasks: column.tasks.map(task =>
-          task.id === editingTask.id ? { ...task, ...taskData } as Task : task
-        ),
-      }));
-
-      // Move task to new column if changed
-      if (taskData.columnId && taskData.columnId !== editingTask.columnId) {
-        const movedColumns = newColumns.map(column => {
-          if (column.id === editingTask.columnId) {
-            return {
-              ...column,
-              tasks: column.tasks.filter(t => t.id !== editingTask.id),
-            };
-          }
-          if (column.id === taskData.columnId) {
-            const updatedTask = { ...editingTask, ...taskData } as Task;
-            return {
-              ...column,
-              tasks: [...column.tasks, updatedTask],
-            };
-          }
-          return column;
-        });
-
-        setData({
-          columns: movedColumns,
-          lastUpdated: new Date().toISOString(),
-        });
+  const handleSaveTask = async (taskData: Partial<Task>) => {
+    try {
+      if (editingTask) {
+        // Update existing task
+        const response = await api.updateTask(editingTask.id, taskData);
+        
+        if (response.success && response.data) {
+          // Reload tasks to get fresh data
+          await loadTasks();
+          setIsModalOpen(false);
+          setEditingTask(undefined);
+        }
       } else {
+        // Create new task
+        const newTaskData = {
+          ...taskData,
+          status: taskData.status || 'backlog',
+          createdAt: new Date().toISOString(),
+        } as Omit<Task, 'id' | 'createdAt' | 'updatedAt'>;
+        
+        const response = await api.createTask(newTaskData);
+        
+        if (response.success && response.data) {
+          // Reload tasks to get fresh data
+          await loadTasks();
+          setIsModalOpen(false);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to save task:', err);
+      setError('Failed to save task. Please try again.');
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (confirm('Are you sure you want to delete this task?')) {
+      try {
+        await api.deleteTask(taskId);
+        
+        // Optimistic update
+        const newColumns = data.columns.map(column => ({
+          ...column,
+          tasks: column.tasks.filter(task => task.id !== taskId),
+        }));
+
         setData({
           columns: newColumns,
           lastUpdated: new Date().toISOString(),
         });
+      } catch (err) {
+        console.error('Failed to delete task:', err);
+        setError('Failed to delete task. Please try again.');
+        loadTasks(); // Reload to restore state
       }
-    } else {
-      // Add new task
-      const newTask = taskData as Task;
-      const newColumns = data.columns.map(column =>
-        column.id === newTask.columnId
-          ? { ...column, tasks: [...column.tasks, newTask] }
-          : column
-      );
-
-      setData({
-        columns: newColumns,
-        lastUpdated: new Date().toISOString(),
-      });
-    }
-  };
-
-  const handleDeleteTask = (taskId: string) => {
-    if (confirm('Are you sure you want to delete this task?')) {
-      const newColumns = data.columns.map(column => ({
-        ...column,
-        tasks: column.tasks.filter(task => task.id !== taskId),
-      }));
-
-      setData({
-        columns: newColumns,
-        lastUpdated: new Date().toISOString(),
-      });
     }
   };
 
@@ -187,13 +273,21 @@ export const KanbanBoard: React.FC = () => {
     }
   };
 
-  const handleImport = async (file: File) => {
+  const handleExportJSON = async () => {
     try {
-      const importedData = await importFromJSON(file);
-      setData(importedData);
-      alert('Data imported successfully!');
-    } catch (error) {
-      alert('Failed to import data. Please check the file format.');
+      await api.exportJSON();
+    } catch (err) {
+      console.error('Failed to export JSON:', err);
+      setError('Failed to export. Please try again.');
+    }
+  };
+
+  const handleExportMarkdown = async () => {
+    try {
+      await api.exportMarkdown();
+    } catch (err) {
+      console.error('Failed to export Markdown:', err);
+      setError('Failed to export. Please try again.');
     }
   };
 
@@ -230,51 +324,129 @@ export const KanbanBoard: React.FC = () => {
             <div className="flex items-center gap-3">
               <FiFilm size={32} className="text-primary-500" />
               <div>
-                <h1 className="text-2xl font-bold text-white">ReelSmith Kanban</h1>
-                <p className="text-sm text-gray-400">Task Management for Film Production</p>
+                <h1 className="text-2xl font-bold text-white">ReelSmith Tasks</h1>
+                <p className="text-sm text-gray-400">
+                  Full-Stack Task Management
+                  {!isOnline && (
+                    <span className="ml-2 inline-flex items-center gap-1 text-yellow-400">
+                      <FiWifiOff size={14} /> Offline Mode
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
-            <button
-              onClick={() => {
-                setEditingTask(undefined);
-                setModalInitialColumn('backlog');
-                setIsModalOpen(true);
-              }}
-              className="btn-primary flex items-center gap-2"
-            >
-              <FiPlus size={18} />
-              New Task
-              <span className="text-xs opacity-70">(Ctrl+N)</span>
-            </button>
+            <div className="flex items-center gap-3">
+              {!isOnline && (
+                <button
+                  onClick={loadTasks}
+                  className="btn-secondary flex items-center gap-2"
+                  disabled={isLoading}
+                >
+                  <FiRefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+                  Retry Connection
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setEditingTask(undefined);
+                  setModalInitialColumn('backlog');
+                  setIsModalOpen(true);
+                }}
+                className="btn-primary flex items-center gap-2"
+                disabled={isLoading}
+              >
+                <FiPlus size={18} />
+                New Task
+                <span className="text-xs opacity-70">(Ctrl+N)</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-6">
-        {/* Filters */}
-        <FilterBar
-          filters={filters}
-          onFilterChange={setFilters}
-          onExportJSON={() => exportToJSON(data)}
-          onExportMarkdown={() => exportToMarkdown(data)}
-          onImport={handleImport}
-          onArchiveCompleted={handleArchiveCompleted}
-        />
-
-        {/* Kanban Board */}
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 overflow-x-auto pb-6">
-            {filteredData.columns.map(column => (
-              <Column
-                key={column.id}
-                column={column}
-                onEditTask={handleEditTask}
-                onDeleteTask={handleDeleteTask}
-              />
-            ))}
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-yellow-900/30 border-b border-yellow-700 px-6 py-3">
+          <div className="container mx-auto flex items-center justify-between">
+            <p className="text-sm text-yellow-300">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="text-yellow-400 hover:text-yellow-300"
+            >
+              Dismiss
+            </button>
           </div>
-        </DragDropContext>
-      </div>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <FiRefreshCw size={32} className="animate-spin text-primary-500 mx-auto mb-4" />
+            <p className="text-gray-400">Loading tasks...</p>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && (
+        <div className="container mx-auto px-6 py-6">
+          {/* Filters */}
+          <FilterBar
+            filter={filters}
+            onFilterChange={(key, value) => {
+              setFilters(prev => ({ ...prev, [key]: value }));
+            }}
+            onClearFilters={() => {
+              setFilters({
+                priority: 'all',
+                category: 'all',
+                assignee: 'all',
+                search: '',
+              });
+            }}
+          />
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={handleExportJSON}
+              className="btn-secondary"
+              disabled={isLoading}
+            >
+              Export JSON
+            </button>
+            <button
+              onClick={handleExportMarkdown}
+              className="btn-secondary"
+              disabled={isLoading}
+            >
+              Export Markdown
+            </button>
+            <button
+              onClick={handleArchiveCompleted}
+              className="btn-secondary"
+              disabled={isLoading}
+            >
+              Archive Completed
+            </button>
+          </div>
+
+          {/* Kanban Board */}
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <div className="flex gap-4 overflow-x-auto pb-6">
+              {filteredData.columns.map(column => (
+                <Column
+                  key={column.id}
+                  column={column}
+                  onEditTask={handleEditTask}
+                  onDeleteTask={handleDeleteTask}
+                />
+              ))}
+            </div>
+          </DragDropContext>
+        </div>
+      )}
 
       {/* Task Modal */}
       <TaskModal

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Task, Priority } from '../types';
+import { Task, TaskPriority } from '../types';
 import { FiEdit2, FiTrash2, FiCalendar, FiUser, FiTag } from 'react-icons/fi';
 import { format } from 'date-fns';
 
@@ -9,7 +9,7 @@ interface TaskCardProps {
   onDelete: (taskId: string) => void;
 }
 
-const priorityColors: Record<Priority, string> = {
+const priorityColors: Record<TaskPriority, string> = {
   high: 'bg-red-500/20 text-red-400 border-red-500/50',
   medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
   low: 'bg-green-500/20 text-green-400 border-green-500/50',

@@ -18,8 +18,11 @@ export interface Task {
   assignee: Assignee;
   dueDate?: string; // ISO date string
   createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
   archived?: boolean;
 }
+
+export type ColumnId = TaskStatus;
 
 export interface Column {
   id: TaskStatus;
@@ -33,6 +36,18 @@ export interface FilterState {
   category: TaskCategory | 'all';
   assignee: Assignee | 'all';
   search: string;
+}
+
+export interface Filters {
+  priority: TaskPriority | 'all';
+  category: TaskCategory | 'all';
+  assignee: Assignee | 'all';
+  search: string;
+}
+
+export interface KanbanData {
+  columns: Column[];
+  lastUpdated: string;
 }
 
 export interface KanbanState {
