@@ -1,0 +1,49 @@
+{
+  "name": "reelsmith-kanban",
+  "version": "1.0.0",
+  "type": "module",
+  "private": false,
+  "description": "Professional Kanban board for ReelSmith task management - tracking marketing, development, and strategic initiatives",
+  "keywords": ["kanban", "task-management", "reelsmith", "film-production", "react", "typescript"],
+  "author": "ReelSmith Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/reelsmithapp/reelsmith-kanban.git"
+  },
+  "bugs": {
+    "url": "https://github.com/reelsmithapp/reelsmith-kanban/issues"
+  },
+  "homepage": "https://github.com/reelsmithapp/reelsmith-kanban#readme",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
+    "date-fns": "^3.6.0",
+    "react": "^18.2.0",
+    "react-beautiful-dnd": "^13.1.1",
+    "react-dom": "^18.2.0",
+    "react-icons": "^5.5.0",
+    "react-markdown": "^9.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.55",
+    "@types/react-beautiful-dnd": "^13.1.8",
+    "@types/react-dom": "^18.2.19",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.24",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.0"
+  }
+}
