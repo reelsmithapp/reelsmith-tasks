@@ -1,118 +1,90 @@
 import React from 'react';
-import { Filters, Priority, Category, Assignee } from '../types';
-import { FiSearch, FiDownload, FiUpload, FiArchive } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiX } from 'react-icons/fi';
+import { FilterState } from '../types';
 
 interface FilterBarProps {
-  filters: Filters;
-  onFilterChange: (filters: Filters) => void;
-  onExportJSON: () => void;
-  onExportMarkdown: () => void;
-  onImport: (file: File) => void;
-  onArchiveCompleted: () => void;
+  filter: FilterState;
+  onFilterChange: (key: keyof FilterState, value: string) => void;
+  onClearFilters: () => void;
 }
 
-export const FilterBar: React.FC<FilterBarProps> = ({
-  filters,
-  onFilterChange,
-  onExportJSON,
-  onExportMarkdown,
-  onImport,
-  onArchiveCompleted,
-}) => {
-  const handleImportClick = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) onImport(file);
-    };
-    input.click();
-  };
+export const FilterBar: React.FC<FilterBarProps> = ({ filter, onFilterChange, onClearFilters }) => {
+  const hasActiveFilters =
+    filter.priority !== 'all' ||
+    filter.category !== 'all' ||
+    filter.assignee !== 'all' ||
+    filter.search !== '';
 
   return (
-    <div className="bg-dark-300 rounded-lg p-4 mb-6 space-y-4">
-      <div className="flex flex-wrap gap-4 items-center">
-        <div className="flex-1 min-w-[200px]">
-          <div className="relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => onFilterChange({ ...filters, search: e.target.value })}
-              placeholder="Search tasks..."
-              className="input w-full pl-10"
-            />
-          </div>
-        </div>
-
-        <select
-          value={filters.priority}
-          onChange={(e) => onFilterChange({ ...filters, priority: e.target.value as Priority | 'all' })}
-          className="select"
-        >
-          <option value="all">All Priorities</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
-
-        <select
-          value={filters.category}
-          onChange={(e) => onFilterChange({ ...filters, category: e.target.value as Category | 'all' })}
-          className="select"
-        >
-          <option value="all">All Categories</option>
-          <option value="Marketing">Marketing</option>
-          <option value="Product">Product</option>
-          <option value="Research">Research</option>
-          <option value="Automation">Automation</option>
-        </select>
-
-        <select
-          value={filters.assignee}
-          onChange={(e) => onFilterChange({ ...filters, assignee: e.target.value as Assignee | 'all' })}
-          className="select"
-        >
-          <option value="all">All Assignees</option>
-          <option value="Arun">Arun</option>
-          <option value="Arc">Arc</option>
-        </select>
+    <div className="bg-reel-gray rounded-lg p-4 mb-6">
+      <div className="flex items-center gap-3 mb-3">
+        <FiFilter className="text-gray-400" size={20} />
+        <h3 className="text-white font-medium">Filters</h3>
+        {hasActiveFilters && (
+          <button
+            onClick={onClearFilters}
+            className="ml-auto text-xs text-gray-400 hover:text-white flex items-center gap-1 transition-colors"
+          >
+            <FiX size={14} />
+            Clear all
+          </button>
+        )}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={onExportJSON}
-          className="btn-secondary text-sm flex items-center gap-2"
-          title="Export to JSON"
-        >
-          <FiDownload size={16} />
-          Export JSON
-        </button>
-        <button
-          onClick={onExportMarkdown}
-          className="btn-secondary text-sm flex items-center gap-2"
-          title="Export to Markdown"
-        >
-          <FiDownload size={16} />
-          Export MD
-        </button>
-        <button
-          onClick={handleImportClick}
-          className="btn-secondary text-sm flex items-center gap-2"
-          title="Import from JSON"
-        >
-          <FiUpload size={16} />
-          Import
-        </button>
-        <button
-          onClick={onArchiveCompleted}
-          className="btn-secondary text-sm flex items-center gap-2"
-          title="Archive completed tasks"
-        >
-          <FiArchive size={16} />
-          Archive Done
-        </button>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Search */}
+        <div className="relative lg:col-span-2">
+          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+          <input
+            type="text"
+            value={filter.search}
+            onChange={(e) => onFilterChange('search', e.target.value)}
+            placeholder="Search tasks..."
+            className="w-full bg-reel-gray-light border border-reel-gray-light rounded-lg pl-10 pr-4 py-2 text-white text-sm focus:outline-none focus:border-reel-blue-light transition-colors"
+          />
+        </div>
+
+        {/* Priority Filter */}
+        <div>
+          <select
+            value={filter.priority}
+            onChange={(e) => onFilterChange('priority', e.target.value)}
+            className="w-full bg-reel-gray-light border border-reel-gray-light rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-reel-blue-light transition-colors"
+          >
+            <option value="all">All Priorities</option>
+            <option value="high">High Priority</option>
+            <option value="medium">Medium Priority</option>
+            <option value="low">Low Priority</option>
+          </select>
+        </div>
+
+        {/* Category Filter */}
+        <div>
+          <select
+            value={filter.category}
+            onChange={(e) => onFilterChange('category', e.target.value)}
+            className="w-full bg-reel-gray-light border border-reel-gray-light rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-reel-blue-light transition-colors"
+          >
+            <option value="all">All Categories</option>
+            <option value="marketing">Marketing</option>
+            <option value="product">Product</option>
+            <option value="research">Research</option>
+            <option value="automation">Automation</option>
+          </select>
+        </div>
+
+        {/* Assignee Filter - Hidden on mobile, shown on larger screens */}
+        <div className="hidden md:block md:col-span-2 lg:col-span-1">
+          <select
+            value={filter.assignee}
+            onChange={(e) => onFilterChange('assignee', e.target.value)}
+            className="w-full bg-reel-gray-light border border-reel-gray-light rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-reel-blue-light transition-colors"
+          >
+            <option value="all">All Assignees</option>
+            <option value="Arun">Arun</option>
+            <option value="Arc">Arc</option>
+          </select>
+        </div>
       </div>
     </div>
   );

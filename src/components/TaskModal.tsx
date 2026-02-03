@@ -1,74 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { Task, Priority, Category, Assignee, ColumnId } from '../types';
 import { FiX } from 'react-icons/fi';
+import { Task, TaskStatus, TaskPriority, TaskCategory, Assignee } from '../types';
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (task: Partial<Task>) => void;
-  task?: Task;
-  initialColumnId?: ColumnId;
+  onSave: (taskData: Omit<Task, 'id' | 'createdAt'>) => void;
+  initialTask?: Task;
 }
 
-export const TaskModal: React.FC<TaskModalProps> = ({
-  isOpen,
-  onClose,
-  onSave,
-  task,
-  initialColumnId,
-}) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    priority: 'medium' as Priority,
-    category: 'Product' as Category,
-    assignee: 'Arun' as Assignee,
-    dueDate: '',
-    columnId: initialColumnId || 'backlog' as ColumnId,
-  });
+export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, initialTask }) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState<TaskStatus>('backlog');
+  const [priority, setPriority] = useState<TaskPriority>('medium');
+  const [category, setCategory] = useState<TaskCategory>('product');
+  const [assignee, setAssignee] = useState<Assignee>('Arun');
+  const [dueDate, setDueDate] = useState('');
 
   useEffect(() => {
-    if (task) {
-      setFormData({
-        title: task.title,
-        description: task.description,
-        priority: task.priority,
-        category: task.category,
-        assignee: task.assignee,
-        dueDate: task.dueDate || '',
-        columnId: task.columnId,
-      });
+    if (initialTask) {
+      setTitle(initialTask.title);
+      setDescription(initialTask.description);
+      setStatus(initialTask.status);
+      setPriority(initialTask.priority);
+      setCategory(initialTask.category);
+      setAssignee(initialTask.assignee);
+      setDueDate(initialTask.dueDate ? initialTask.dueDate.split('T')[0] : '');
     } else {
-      setFormData({
-        title: '',
-        description: '',
-        priority: 'medium',
-        category: 'Product',
-        assignee: 'Arun',
-        dueDate: '',
-        columnId: initialColumnId || 'backlog',
-      });
+      // Reset form
+      setTitle('');
+      setDescription('');
+      setStatus('backlog');
+      setPriority('medium');
+      setCategory('product');
+      setAssignee('Arun');
+      setDueDate('');
     }
-  }, [task, initialColumnId, isOpen]);
+  }, [initialTask, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim()) return;
+    if (!title.trim()) return;
 
-    const taskData: Partial<Task> = {
-      ...formData,
-      dueDate: formData.dueDate || undefined,
-    };
+    onSave({
+      title: title.trim(),
+      description: description.trim(),
+      status,
+      priority,
+      category,
+      assignee,
+      dueDate: dueDate || undefined,
+      archived: initialTask?.archived,
+    });
 
-    if (task) {
-      taskData.id = task.id;
-      taskData.createdAt = task.createdAt;
-    } else {
-      taskData.id = `task-${Date.now()}`;
-      taskData.createdAt = new Date().toISOString();
-    }
-
-    onSave(taskData);
     onClose();
   };
 
@@ -76,136 +61,146 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-dark-300 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-800">
-        <div className="sticky top-0 bg-dark-300 border-b border-gray-800 px-6 py-4 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-white">
-            {task ? 'Edit Task' : 'New Task'}
+      <div className="bg-reel-gray-light rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-reel-gray">
+          <h2 className="text-2xl font-semibold text-white">
+            {initialTask ? 'Edit Task' : 'New Task'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="p-2 hover:bg-reel-gray rounded-lg text-gray-400 hover:text-white transition-colors"
           >
             <FiX size={24} />
           </button>
         </div>
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Title */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Title *
+              Title <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="input w-full"
-              placeholder="Enter task title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors"
+              placeholder="Enter task title..."
               required
+              autoFocus
             />
           </div>
 
+          {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Description
             </label>
             <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="input w-full min-h-[100px] resize-y"
-              placeholder="Enter task description (Markdown supported)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors resize-none"
+              placeholder="Add a description... (Markdown supported)"
+              rows={4}
             />
           </div>
 
+          {/* Status and Priority */}
           <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Status
+              </label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors"
+              >
+                <option value="backlog">📋 Backlog</option>
+                <option value="in-progress">🔄 In Progress</option>
+                <option value="done">✅ Done</option>
+                <option value="blocked">⏸️ Blocked/Waiting</option>
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Priority
               </label>
               <select
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value as Priority })}
-                className="select w-full"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as TaskPriority)}
+                className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors"
               >
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
+                <option value="high">🔴 High</option>
+                <option value="medium">🟡 Medium</option>
+                <option value="low">🟢 Low</option>
               </select>
             </div>
+          </div>
 
+          {/* Category and Assignee */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Category
               </label>
               <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value as Category })}
-                className="select w-full"
+                value={category}
+                onChange={(e) => setCategory(e.target.value as TaskCategory)}
+                className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors"
               >
-                <option value="Marketing">Marketing</option>
-                <option value="Product">Product</option>
-                <option value="Research">Research</option>
-                <option value="Automation">Automation</option>
+                <option value="marketing">Marketing</option>
+                <option value="product">Product</option>
+                <option value="research">Research</option>
+                <option value="automation">Automation</option>
               </select>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Assignee
               </label>
               <select
-                value={formData.assignee}
-                onChange={(e) => setFormData({ ...formData, assignee: e.target.value as Assignee })}
-                className="select w-full"
+                value={assignee}
+                onChange={(e) => setAssignee(e.target.value as Assignee)}
+                className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors"
               >
                 <option value="Arun">Arun</option>
                 <option value="Arc">Arc</option>
               </select>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Due Date
-              </label>
-              <input
-                type="date"
-                value={formData.dueDate}
-                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                className="input w-full"
-              />
-            </div>
           </div>
 
+          {/* Due Date */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Column
+              Due Date
             </label>
-            <select
-              value={formData.columnId}
-              onChange={(e) => setFormData({ ...formData, columnId: e.target.value as ColumnId })}
-              className="select w-full"
-            >
-              <option value="backlog">📋 Backlog</option>
-              <option value="in-progress">🔄 In Progress</option>
-              <option value="done">✅ Done</option>
-              <option value="blocked">⏸️ Blocked/Waiting</option>
-            </select>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors"
+            />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-800">
+          {/* Actions */}
+          <div className="flex gap-3 pt-4">
+            <button
+              type="submit"
+              className="flex-1 bg-reel-blue-light hover:bg-reel-blue-bright text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              {initialTask ? 'Update Task' : 'Create Task'}
+            </button>
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary"
+              className="px-6 bg-reel-gray hover:bg-reel-gray-light text-gray-300 font-medium py-2 rounded-lg transition-colors"
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn-primary"
-            >
-              {task ? 'Update Task' : 'Create Task'}
             </button>
           </div>
         </form>
