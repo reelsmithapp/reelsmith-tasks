@@ -7,11 +7,62 @@ Complete REST API documentation for the ReelSmith Tasks backend.
 - **Development**: `http://localhost:3000`
 - **Production**: `https://reelsmith-tasks.railway.app` (update with your Railway URL)
 
-## Authentication
+## 🔒 Authentication
 
-Currently, no authentication is required. This is a private tool for ReelSmith team use.
+**All API endpoints (except `/health`) require API key authentication.**
 
-**Note**: In production, consider adding authentication if exposing publicly.
+### API Key Headers
+
+Include your API key in one of these headers:
+
+**Option 1: x-api-key header (recommended)**
+```bash
+curl -H "x-api-key: YOUR_API_KEY" http://localhost:3000/api/tasks
+```
+
+**Option 2: Authorization header**
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" http://localhost:3000/api/tasks
+```
+
+### Getting Your API Key
+
+1. **Generate a secure API key:**
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+   ```
+
+2. **Set in environment variables:**
+   ```env
+   API_KEY=your-generated-api-key-here
+   ```
+
+3. **Include in all API requests** (see examples below)
+
+### Unauthorized Response (401)
+
+If you don't provide an API key or it's invalid:
+
+```json
+{
+  "error": "Unauthorized",
+  "message": "Invalid or missing API key. Please provide a valid API key in the x-api-key header or Authorization header."
+}
+```
+
+### Public Endpoints
+
+Only `/health` is publicly accessible without authentication:
+
+```bash
+curl http://localhost:3000/health
+```
+
+**⚠️ SECURITY WARNING:**
+- Never commit your API key to Git
+- Never share your API key publicly
+- Use different API keys for development and production
+- Store API keys in environment variables only
 
 ## Response Format
 
@@ -434,9 +485,12 @@ Credentials are enabled for cookie-based authentication (future feature).
 
 ### cURL Examples
 
+**Note:** Replace `YOUR_API_KEY` with your actual API key from `.env`
+
 **Create a task:**
 ```bash
 curl -X POST http://localhost:3000/api/tasks \
+  -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Research competitors",
@@ -451,12 +505,13 @@ curl -X POST http://localhost:3000/api/tasks \
 
 **Get all tasks:**
 ```bash
-curl http://localhost:3000/api/tasks
+curl -H "x-api-key: YOUR_API_KEY" http://localhost:3000/api/tasks
 ```
 
 **Update task:**
 ```bash
 curl -X PUT http://localhost:3000/api/tasks/550e8400-e29b-41d4-a716-446655440000 \
+  -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "priority": "medium",
@@ -467,23 +522,25 @@ curl -X PUT http://localhost:3000/api/tasks/550e8400-e29b-41d4-a716-446655440000
 **Move task:**
 ```bash
 curl -X PATCH http://localhost:3000/api/tasks/550e8400-e29b-41d4-a716-446655440000/move \
+  -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"status": "done"}'
 ```
 
 **Delete task:**
 ```bash
-curl -X DELETE http://localhost:3000/api/tasks/550e8400-e29b-41d4-a716-446655440000
+curl -X DELETE http://localhost:3000/api/tasks/550e8400-e29b-41d4-a716-446655440000 \
+  -H "x-api-key: YOUR_API_KEY"
 ```
 
 **Export as JSON:**
 ```bash
-curl http://localhost:3000/api/export/json -o tasks.json
+curl -H "x-api-key: YOUR_API_KEY" http://localhost:3000/api/export/json -o tasks.json
 ```
 
 **Export as Markdown:**
 ```bash
-curl http://localhost:3000/api/export/markdown -o tasks.md
+curl -H "x-api-key: YOUR_API_KEY" http://localhost:3000/api/export/markdown -o tasks.md
 ```
 
 ---
@@ -492,14 +549,23 @@ curl http://localhost:3000/api/export/markdown -o tasks.md
 
 ```typescript
 const API_BASE = 'http://localhost:3000';
+const API_KEY = process.env.API_KEY; // Server-side
+// or
+const API_KEY = import.meta.env.VITE_API_KEY; // Client-side (Vite)
+
+// Helper function to create headers with API key
+function getHeaders(contentType = 'application/json') {
+  return {
+    'x-api-key': API_KEY,
+    'Content-Type': contentType,
+  };
+}
 
 // Create a task
 async function createTask() {
   const response = await fetch(`${API_BASE}/api/tasks`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getHeaders(),
     body: JSON.stringify({
       title: 'New marketing task',
       category: 'marketing',
@@ -509,13 +575,27 @@ async function createTask() {
     }),
   });
   
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Unauthorized: Invalid API key');
+    }
+    throw new Error('Failed to create task');
+  }
+  
   const data = await response.json();
   return data.data;
 }
 
 // Get all tasks
 async function getTasks() {
-  const response = await fetch(`${API_BASE}/api/tasks`);
+  const response = await fetch(`${API_BASE}/api/tasks`, {
+    headers: getHeaders(),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch tasks');
+  }
+  
   const data = await response.json();
   return data.data;
 }
@@ -524,11 +604,13 @@ async function getTasks() {
 async function updateTask(id: string, updates: Partial<Task>) {
   const response = await fetch(`${API_BASE}/api/tasks/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getHeaders(),
     body: JSON.stringify(updates),
   });
+  
+  if (!response.ok) {
+    throw new Error('Failed to update task');
+  }
   
   const data = await response.json();
   return data.data;

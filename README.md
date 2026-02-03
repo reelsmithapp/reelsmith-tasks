@@ -36,6 +36,52 @@ Full-stack task management system for ReelSmith - tracking marketing, developmen
 - Railway (single service deployment)
 - Neon DB (separate managed database)
 
+## 🔒 Security
+
+ReelSmith Tasks uses API key authentication to protect your task data.
+
+**⚠️ IMPORTANT: Keep your API key secret!**
+
+### API Authentication
+
+All API endpoints (except `/health`) require an API key in the request headers:
+
+```bash
+# Using x-api-key header (recommended)
+curl -H "x-api-key: YOUR_API_KEY" http://localhost:3000/api/tasks
+
+# Using Authorization header
+curl -H "Authorization: Bearer YOUR_API_KEY" http://localhost:3000/api/tasks
+```
+
+### Generating a Secure API Key
+
+Generate a cryptographically secure random key:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
+
+This will output something like: `baYVGJLh9A1YozvSNGToQub3a8LJs1yv-DHAZcfdj0k`
+
+**Never commit your API key to Git!** Store it securely in:
+- `.env` file (local development - ignored by Git)
+- Railway environment variables (production)
+- Password manager or secrets vault
+
+### Setting Up API Authentication
+
+1. **Generate your API key** (see above)
+2. **Add to `.env` file:**
+   ```env
+   API_KEY=your-generated-api-key-here
+   VITE_API_KEY=your-generated-api-key-here
+   ```
+3. **For production deployment:**
+   - Set `API_KEY` in Railway environment variables
+   - Set `VITE_API_KEY` to the same value
+4. **Never share your API key** with anyone or commit it to Git
+
 ## 🛠️ Installation & Setup
 
 ### Prerequisites
@@ -62,11 +108,23 @@ Full-stack task management system for ReelSmith - tracking marketing, developmen
    cp .env.example .env
    ```
    
-   Edit `.env` with your Neon database connection string:
-   ```
+   Edit `.env` and add your configuration:
+   ```env
+   # Database
    DATABASE_URL=postgresql://user:password@host.neon.tech/reelsmith_tasks?sslmode=require
+   
+   # API Configuration
    PORT=3000
    NODE_ENV=development
+   
+   # Security - Generate a secure API key (see Security section)
+   API_KEY=your-secure-api-key-here
+   VITE_API_KEY=your-secure-api-key-here
+   
+   # API URL (for frontend)
+   VITE_API_URL=http://localhost:3000
+   
+   # CORS
    FRONTEND_URL=http://localhost:5173
    ```
 
@@ -285,13 +343,17 @@ reelsmith-tasks/
 
 ## 🔧 Environment Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `DATABASE_URL` | Neon PostgreSQL connection string | `postgresql://user:pass@host.neon.tech/db` |
-| `PORT` | Backend API port | `3000` |
-| `NODE_ENV` | Environment (development/production) | `production` |
-| `FRONTEND_URL` | Frontend URL for CORS | `https://app.railway.app` |
-| `VITE_API_URL` | Frontend API endpoint | `https://api.railway.app` |
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `DATABASE_URL` | Neon PostgreSQL connection string | Yes | `postgresql://user:pass@host.neon.tech/db` |
+| `API_KEY` | Secure API key for authentication | **Yes** | `baYVGJLh9A1Y...` (generate via crypto) |
+| `VITE_API_KEY` | Frontend API key (same as API_KEY) | **Yes** | Same as `API_KEY` |
+| `VITE_API_URL` | Frontend API endpoint | Yes | `http://localhost:3000` or production URL |
+| `PORT` | Backend API port | No | `3000` (default) |
+| `NODE_ENV` | Environment mode | No | `development` or `production` |
+| `FRONTEND_URL` | Frontend URL for CORS | No | `http://localhost:5173` or `*` for public |
+
+**Security Note:** `API_KEY` and `VITE_API_KEY` must be kept secret. Never commit them to Git or share publicly.
 
 ## 🤝 Contributing
 

@@ -28,7 +28,8 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "cli": "tsx cli.ts"
+    "cli": "tsx cli.ts",
+    "keygen": "node scripts/generate-api-key.js"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",

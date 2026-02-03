@@ -132,7 +132,24 @@ git push origin main
 5. Select **`reelsmithapp/reelsmith-tasks`** repository
 6. Railway will automatically detect the configuration
 
-#### 3.2 Configure Environment Variables
+#### 3.2 Generate Secure API Key
+
+**CRITICAL STEP** - Generate a secure API key before deployment:
+
+```bash
+# Generate a secure random API key
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
+
+Example output: `baYVGJLh9A1YozvSNGToQub3a8LJs1yv-DHAZcfdj0k`
+
+**⚠️ IMPORTANT:**
+- Copy this key and store it securely (password manager)
+- Never commit this key to Git
+- Use a different key for production vs development
+- This key authenticates all API requests
+
+#### 3.3 Configure Environment Variables
 
 1. In your Railway project, click on your service
 2. Go to **"Variables"** tab
@@ -143,23 +160,23 @@ git push origin main
 | `DATABASE_URL` | Your Neon connection string | From Step 1.2 |
 | `NODE_ENV` | `production` | Required |
 | `PORT` | `3000` | Railway auto-assigns if not set |
-| `FRONTEND_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` | Railway magic variable |
+| `API_KEY` | Generated secure key | **CRITICAL - Keep secret!** |
+| `VITE_API_KEY` | Same as API_KEY | Frontend needs same key |
+| `VITE_API_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` | API endpoint for frontend |
+| `FRONTEND_URL` | `*` or specific domain | CORS configuration |
 
-**Important**: Use Railway's magic variable for `FRONTEND_URL`:
+**Important**: Use Railway's magic variable for `VITE_API_URL`:
 ```
 https://${{RAILWAY_PUBLIC_DOMAIN}}
 ```
 
 This automatically resolves to your Railway public URL.
 
-#### 3.3 Set Up Frontend Environment
-
-1. In Railway service settings, go to **"Variables"**
-2. Add:
-
-| Variable | Value |
-|----------|-------|
-| `VITE_API_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` |
+**Security Notes:**
+- `API_KEY` protects your API from unauthorized access
+- Both backend (`API_KEY`) and frontend (`VITE_API_KEY`) must have the same value
+- Never expose `API_KEY` in client-side code or logs
+- `FRONTEND_URL` can be `*` for public access or specific domains for restricted access
 
 #### 3.4 Deploy
 
@@ -204,6 +221,11 @@ railway link
 #### 3.5 Set Environment Variables
 
 ```bash
+# Generate secure API key first
+API_KEY=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))")
+echo "Generated API Key: $API_KEY"
+echo "⚠️  Save this key securely!"
+
 # Set database URL
 railway variables set DATABASE_URL="postgresql://..."
 
@@ -213,10 +235,19 @@ railway variables set NODE_ENV=production
 # Set port
 railway variables set PORT=3000
 
+# Set API keys (CRITICAL for security)
+railway variables set API_KEY="$API_KEY"
+railway variables set VITE_API_KEY="$API_KEY"
+
 # Frontend URL (use magic variable)
-railway variables set FRONTEND_URL='https://${{RAILWAY_PUBLIC_DOMAIN}}'
+railway variables set FRONTEND_URL='*'
 railway variables set VITE_API_URL='https://${{RAILWAY_PUBLIC_DOMAIN}}'
 ```
+
+**⚠️ Security Warning:**
+- Save the generated `API_KEY` in a password manager
+- Never commit this key to Git
+- Use a different key for each environment (dev/staging/prod)
 
 #### 3.6 Deploy
 
@@ -251,10 +282,12 @@ npm run db:push
 
 ## Step 5: Verify Deployment
 
-### 5.1 Check Health
+### 5.1 Check Health (Public Endpoint)
+
+The health endpoint is publicly accessible without authentication:
 
 ```bash
-curl https://your-railway-app.railway.app/
+curl https://your-railway-app.railway.app/health
 ```
 
 Expected response:
@@ -263,25 +296,74 @@ Expected response:
   "status": "ok",
   "message": "ReelSmith Tasks API",
   "version": "1.0.0",
-  "timestamp": "2024-01-15T10:00:00.000Z"
+  "timestamp": "2024-01-15T10:00:00.000Z",
+  "environment": "production"
 }
 ```
 
-### 5.2 Test API
+### 5.2 Test API Authentication
+
+**Test without API key (should fail):**
+```bash
+curl https://your-railway-app.railway.app/api/tasks
+```
+
+Expected response (401 Unauthorized):
+```json
+{
+  "error": "Unauthorized",
+  "message": "Invalid or missing API key. Please provide a valid API key in the x-api-key header or Authorization header."
+}
+```
+
+**Test with valid API key (should succeed):**
+```bash
+# Replace YOUR_API_KEY with your actual key
+curl -H "x-api-key: YOUR_API_KEY" https://your-railway-app.railway.app/api/tasks
+```
+
+Expected response (200 OK):
+```json
+{
+  "success": true,
+  "data": [],
+  "count": 0
+}
+```
+
+### 5.3 Test API Operations
+
+All API operations require the API key:
 
 ```bash
 # Get all tasks
-curl https://your-railway-app.railway.app/api/tasks
+curl -H "x-api-key: YOUR_API_KEY" \
+  https://your-railway-app.railway.app/api/tasks
 
 # Create a test task
 curl -X POST https://your-railway-app.railway.app/api/tasks \
+  -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Test deployment",
     "category": "product",
     "assignee": "Arun",
-    "priority": "low"
+    "priority": "low",
+    "description": "Verify API authentication works"
   }'
+```
+
+Expected response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "...",
+    "title": "Test deployment",
+    ...
+  },
+  "message": "Task created successfully"
+}
 ```
 
 ### 5.3 Test Frontend
@@ -525,13 +607,92 @@ pg_dump $DATABASE_URL > backup.sql
 - Neon: Included in Arun's subscription
 - **Total: ~$5-10/month**
 
-## Security Best Practices
+## 🔒 Security Best Practices
 
-1. **Environment Variables**: Never commit `.env` files
-2. **Database**: Use read-only users for analytics
-3. **CORS**: Configure allowed origins properly
-4. **HTTPS**: Always use HTTPS in production (Railway default)
-5. **Secrets**: Rotate database passwords periodically
+### API Key Security (CRITICAL)
+
+1. **Generate Strong Keys**: Always use cryptographic random generation
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+   ```
+
+2. **Never Commit Keys**: 
+   - Add `.env` to `.gitignore` (already done)
+   - Never hardcode API keys in code
+   - Don't log API keys in application logs
+
+3. **Rotate Keys Periodically**:
+   - Change API keys every 90 days
+   - Immediately rotate if compromised
+   - Update in Railway variables and notify users
+
+4. **Use Different Keys Per Environment**:
+   - Development: One key (can be shared with team)
+   - Staging: Different key
+   - Production: Unique, highly secure key
+
+5. **Access Control**:
+   - Only share API keys with authorized team members
+   - Store in password manager (1Password, LastPass, etc.)
+   - Revoke access when team members leave
+
+### Deployment Security
+
+1. **Environment Variables**: 
+   - Store all secrets in Railway variables (encrypted at rest)
+   - Never commit `.env` files to Git
+   - Use Railway's secret management
+
+2. **Database Security**:
+   - Enable SSL connections (Neon default)
+   - Use read-only users for analytics
+   - Regular backups (Neon automatic)
+   - Never expose `DATABASE_URL` publicly
+
+3. **CORS Configuration**:
+   - Development: Allow `http://localhost:5173`
+   - Production: Set to specific domain or `*` for public API
+   - Don't use `*` if handling sensitive data
+
+4. **HTTPS**:
+   - Railway provides free SSL certificates
+   - Always use HTTPS in production
+   - Enable HSTS headers (Railway default)
+
+5. **Monitoring**:
+   - Monitor for unusual API activity
+   - Set up alerts for failed authentication attempts
+   - Review Railway logs regularly
+
+### Response to Security Incident
+
+If API key is compromised:
+
+1. **Immediately generate new key**:
+   ```bash
+   NEW_KEY=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))")
+   railway variables set API_KEY="$NEW_KEY"
+   railway variables set VITE_API_KEY="$NEW_KEY"
+   ```
+
+2. **Redeploy application** (automatic with Railway)
+
+3. **Notify authorized users** of new key
+
+4. **Review logs** for unauthorized access
+
+5. **Update documentation** with new security measures
+
+### Regular Security Checklist
+
+- [ ] API keys rotated within last 90 days
+- [ ] No API keys in Git history
+- [ ] Environment variables are up to date
+- [ ] Database backups are working
+- [ ] Railway logs reviewed for anomalies
+- [ ] CORS configuration is correct
+- [ ] All team members using secure storage for keys
+- [ ] Inactive team member access revoked
 
 ## Support
 
@@ -581,8 +742,15 @@ railway run psql $DATABASE_URL
 - [ ] `DATABASE_URL` - Neon connection string
 - [ ] `NODE_ENV` - Set to `production`
 - [ ] `PORT` - Set to `3000`
-- [ ] `FRONTEND_URL` - Railway public domain
-- [ ] `VITE_API_URL` - Same as FRONTEND_URL
+- [ ] `API_KEY` - **Generated secure random key (CRITICAL)**
+- [ ] `VITE_API_KEY` - **Same as API_KEY (CRITICAL)**
+- [ ] `VITE_API_URL` - Railway public domain or `https://${{RAILWAY_PUBLIC_DOMAIN}}`
+- [ ] `FRONTEND_URL` - `*` or specific allowed origins
+
+**Security Reminder:** Generate API key with:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
 
 ---
 
