@@ -6,11 +6,13 @@ import { FilterBar } from './FilterBar';
 import { Task, Filters, KanbanData, ColumnId } from '../types';
 import { getInitialData } from '../utils/initialData';
 import { api, saveOffline, loadOffline } from '../services/api';
-import { FiPlus, FiFilm, FiWifiOff, FiRefreshCw } from 'react-icons/fi';
+import { FiPlus, FiWifiOff, FiRefreshCw, FiLogOut, FiUser } from 'react-icons/fi';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
 export const KanbanBoard: React.FC = () => {
+  const { username, logout } = useAuth();
   const [data, setData] = useState<KanbanData>(getInitialData);
   const [filters, setFilters] = useState<Filters>({
     priority: 'all',
@@ -321,22 +323,20 @@ export const KanbanBoard: React.FC = () => {
     <div className="min-h-screen bg-obsidian">
       {/* Header */}
       <div className="bg-obsidian-elevated border-b border-frost-5 sticky top-0 z-40">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-3 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-brand flex items-center justify-center">
-                <FiFilm size={24} className="text-obsidian" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">ReelSmith Tasks</h1>
-                <p className="text-sm text-muted-foreground">
-                  Full-Stack Task Management
-                  {!isOnline && (
-                    <span className="ml-2 inline-flex items-center gap-1 text-inferno-400">
-                      <FiWifiOff size={14} /> Offline Mode
-                    </span>
-                  )}
-                </p>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <img
+                src="/icon.png"
+                alt="ReelSmith"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex-shrink-0"
+              />
+              <div className="min-w-0">
+                {!isOnline && (
+                  <p className="text-xs text-inferno-400 sm:hidden flex items-center gap-1">
+                    <FiWifiOff size={12} /> Offline
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -362,9 +362,24 @@ export const KanbanBoard: React.FC = () => {
                 className="flex items-center gap-2"
               >
                 <FiPlus size={18} />
-                New Task
-                <kbd className="ml-1 text-xs opacity-70 bg-obsidian/30 px-1.5 py-0.5 rounded">Ctrl+N</kbd>
+                <span className="hidden sm:inline">New Task</span>
+                <kbd className="hidden sm:inline ml-1 text-xs opacity-70 bg-obsidian/30 px-1.5 py-0.5 rounded">Ctrl+N</kbd>
               </Button>
+              <div className="flex items-center gap-2 pl-3 border-l border-frost-10">
+                <span className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground">
+                  <FiUser size={14} />
+                  {username}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={logout}
+                  title="Sign out"
+                  className="text-muted-foreground hover:text-white"
+                >
+                  <FiLogOut size={18} />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -400,7 +415,7 @@ export const KanbanBoard: React.FC = () => {
       )}
 
       {!isLoading && (
-        <div className="container mx-auto px-6 py-6">
+        <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-6">
           {/* Filters */}
           <FilterBar
             filter={filters}
@@ -417,12 +432,14 @@ export const KanbanBoard: React.FC = () => {
             }}
           />
 
-          {/* Action Buttons */}
-          <div className="flex gap-2 mb-6">
+          {/* Action Buttons - Scrollable on mobile */}
+          <div className="flex gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 sm:overflow-visible">
             <Button
               variant="secondary"
               onClick={handleExportJSON}
               disabled={isLoading}
+              size="sm"
+              className="flex-shrink-0"
             >
               Export JSON
             </Button>
@@ -430,6 +447,8 @@ export const KanbanBoard: React.FC = () => {
               variant="secondary"
               onClick={handleExportMarkdown}
               disabled={isLoading}
+              size="sm"
+              className="flex-shrink-0"
             >
               Export Markdown
             </Button>
@@ -437,14 +456,16 @@ export const KanbanBoard: React.FC = () => {
               variant="secondary"
               onClick={handleArchiveCompleted}
               disabled={isLoading}
+              size="sm"
+              className="flex-shrink-0"
             >
               Archive Completed
             </Button>
           </div>
 
-          {/* Kanban Board */}
+          {/* Kanban Board - Touch-friendly scrolling */}
           <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="flex gap-4 overflow-x-auto pb-6">
+            <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-6 -mx-3 px-3 sm:mx-0 sm:px-0 snap-x snap-mandatory touch-pan-x">
               {filteredData.columns.map(column => (
                 <Column
                   key={column.id}

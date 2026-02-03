@@ -5,6 +5,7 @@ import { logger } from 'hono/logger';
 import { serveStatic } from '@hono/node-server/serve-static';
 import * as dotenv from 'dotenv';
 import { authMiddleware } from './middleware/auth.js';
+import authRouter from './routes/auth.js';
 import tasksRouter from './routes/tasks.js';
 import exportRouter from './routes/export.js';
 import * as path from 'path';
@@ -36,7 +37,10 @@ app.get('/health', (c) => {
   });
 });
 
-// Apply auth middleware to all /api/* routes (must be before route registration)
+// Auth routes (public, no auth required)
+app.route('/api/auth', authRouter);
+
+// Apply auth middleware to all other /api/* routes
 app.use('/api/*', authMiddleware);
 
 // Protected API Routes

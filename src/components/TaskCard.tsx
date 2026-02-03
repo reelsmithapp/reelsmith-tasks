@@ -5,11 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FiEdit2, FiTrash2, FiCalendar, FiUser, FiTag } from 'react-icons/fi';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface TaskCardProps {
   task: Task;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  isDragging?: boolean;
 }
 
 const priorityVariantMap: Record<TaskPriority, 'high' | 'medium' | 'low'> = {
@@ -25,9 +27,16 @@ const categoryVariantMap: Record<TaskCategory, 'marketing' | 'product' | 'resear
   automation: 'automation',
 };
 
-export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) => {
+export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, isDragging }) => {
   return (
-    <Card variant="glass" className="mb-3 group cursor-pointer animate-crystallize hover:-translate-y-1 hover:shadow-xl hover:shadow-plasma-500/10">
+    <Card
+      variant={isDragging ? "default" : "glass"}
+      className={cn(
+        "mb-3 group cursor-grab active:cursor-grabbing",
+        !isDragging && "animate-crystallize hover:-translate-y-1 hover:shadow-xl hover:shadow-plasma-500/10",
+        isDragging && "bg-obsidian-surface border-inferno-500/50 shadow-2xl shadow-inferno-500/20"
+      )}
+    >
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <CardTitle className="group-hover:text-inferno-400 transition-colors pr-2 flex-1">

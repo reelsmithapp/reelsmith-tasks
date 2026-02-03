@@ -14,7 +14,7 @@ interface ColumnProps {
 
 export const Column: React.FC<ColumnProps> = ({ column, onEditTask, onDeleteTask }) => {
   return (
-    <div className="flex-shrink-0 w-80">
+    <div className="flex-shrink-0 w-72 sm:w-80 snap-start">
       <Card variant="glass" className="h-full">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -45,12 +45,18 @@ export const Column: React.FC<ColumnProps> = ({ column, onEditTask, onDeleteTask
                       ref={provided.innerRef}
                       {...provided.draggableProps}
                       {...provided.dragHandleProps}
-                      className={cn(snapshot.isDragging && "opacity-50")}
+                      className={cn(
+                        snapshot.isDragging && "z-50 rotate-2 scale-105"
+                      )}
+                      style={{
+                        ...provided.draggableProps.style,
+                      }}
                     >
                       <TaskCard
                         task={task}
                         onEdit={onEditTask}
                         onDelete={onDeleteTask}
+                        isDragging={snapshot.isDragging}
                       />
                     </div>
                   )}

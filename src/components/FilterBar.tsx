@@ -26,53 +26,53 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filter, onFilterChange, on
     filter.search !== '';
 
   return (
-    <Card variant="glass" className="mb-6">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3 mb-3">
-          <FiFilter className="text-muted-foreground" size={20} />
-          <h3 className="text-white font-medium">Filters</h3>
+    <Card variant="glass" className="mb-4 sm:mb-6">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-center gap-2 sm:gap-3 mb-3">
+          <FiFilter className="text-muted-foreground flex-shrink-0" size={18} />
+          <h3 className="text-white font-medium text-sm sm:text-base">Filters</h3>
           {hasActiveFilters && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onClearFilters}
-              className="ml-auto text-xs text-muted-foreground hover:text-white"
+              className="ml-auto text-xs text-muted-foreground hover:text-white p-1 sm:p-2 h-auto"
             >
-              <FiX size={14} className="mr-1" />
-              Clear all
+              <FiX size={14} className="sm:mr-1" />
+              <span className="hidden sm:inline">Clear all</span>
             </Button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Search */}
-          <div className="relative lg:col-span-2">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+          {/* Search - Full width on mobile */}
+          <div className="relative col-span-2 lg:col-span-2">
             <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground z-10" size={16} />
             <Input
               value={filter.search}
               onChange={(e) => onFilterChange('search', e.target.value)}
               placeholder="Search tasks..."
-              className="pl-10"
+              className="pl-10 h-9 sm:h-10 text-sm"
             />
           </div>
 
           {/* Priority Filter */}
           <Select value={filter.priority} onValueChange={(value) => onFilterChange('priority', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="All Priorities" />
+            <SelectTrigger className="h-9 sm:h-10 text-sm">
+              <SelectValue placeholder="Priority" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Priorities</SelectItem>
-              <SelectItem value="high">High Priority</SelectItem>
-              <SelectItem value="medium">Medium Priority</SelectItem>
-              <SelectItem value="low">Low Priority</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
             </SelectContent>
           </Select>
 
           {/* Category Filter */}
           <Select value={filter.category} onValueChange={(value) => onFilterChange('category', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="All Categories" />
+            <SelectTrigger className="h-9 sm:h-10 text-sm">
+              <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
@@ -83,19 +83,17 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filter, onFilterChange, on
             </SelectContent>
           </Select>
 
-          {/* Assignee Filter - Hidden on mobile, shown on larger screens */}
-          <div className="hidden md:block md:col-span-2 lg:col-span-1">
-            <Select value={filter.assignee} onValueChange={(value) => onFilterChange('assignee', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Assignees" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Assignees</SelectItem>
-                <SelectItem value="Arun">Arun</SelectItem>
-                <SelectItem value="Arc">Arc</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Assignee Filter - shown on all screens now */}
+          <Select value={filter.assignee} onValueChange={(value) => onFilterChange('assignee', value)}>
+            <SelectTrigger className="h-9 sm:h-10 text-sm col-span-2 sm:col-span-1">
+              <SelectValue placeholder="Assignee" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Assignees</SelectItem>
+              <SelectItem value="Arun">Arun</SelectItem>
+              <SelectItem value="Arc">Arc</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </CardContent>
     </Card>

@@ -1,7 +1,6 @@
 import { Task } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-const API_KEY = import.meta.env.VITE_API_KEY;
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -11,18 +10,15 @@ export interface ApiResponse<T> {
   count?: number;
 }
 
+function getAuthToken(): string | null {
+  return localStorage.getItem('auth_token');
+}
+
 class ApiClient {
   private baseUrl: string;
-  private apiKey: string | undefined;
 
-  constructor(baseUrl: string, apiKey?: string) {
+  constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
-    this.apiKey = apiKey;
-    
-    if (!this.apiKey) {
-      console.warn('⚠️  API_KEY not configured. API requests will fail.');
-      console.warn('   Set VITE_API_KEY in your .env file');
-    }
   }
 
   private async request<T>(
@@ -33,17 +29,18 @@ class ApiClient {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      
-      // Add API key to headers if available
-      if (this.apiKey) {
-        headers['x-api-key'] = this.apiKey;
+
+      // Add auth token to headers if available
+      const token = getAuthToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
-      
+
       // Merge with any additional headers from options
       if (options?.headers) {
         Object.assign(headers, options.headers);
       }
-      
+
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         ...options,
         headers,
@@ -54,10 +51,13 @@ class ApiClient {
       if (!response.ok) {
         // Special handling for 401 Unauthorized
         if (response.status === 401) {
-          console.error('❌ Unauthorized: Invalid or missing API key');
-          throw new Error('Authentication failed. Please check your API key configuration.');
+          // Clear stored token and reload to show login
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_username');
+          window.location.reload();
+          throw new Error('Session expired. Please log in again.');
         }
-        
+
         throw new Error(data.error || data.message || 'API request failed');
       }
 
@@ -108,16 +108,17 @@ class ApiClient {
   async exportJSON(): Promise<void> {
     try {
       const headers: Record<string, string> = {};
-      if (this.apiKey) {
-        headers['x-api-key'] = this.apiKey;
+      const token = getAuthToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
-      
+
       const response = await fetch(`${this.baseUrl}/api/export/json`, { headers });
-      
+
       if (!response.ok) {
         throw new Error('Export failed');
       }
-      
+
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -134,16 +135,17 @@ class ApiClient {
   async exportMarkdown(): Promise<void> {
     try {
       const headers: Record<string, string> = {};
-      if (this.apiKey) {
-        headers['x-api-key'] = this.apiKey;
+      const token = getAuthToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
-      
+
       const response = await fetch(`${this.baseUrl}/api/export/markdown`, { headers });
-      
+
       if (!response.ok) {
         throw new Error('Export failed');
       }
-      
+
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -158,7 +160,7 @@ class ApiClient {
   }
 }
 
-export const api = new ApiClient(API_BASE_URL, API_KEY);
+export const api = new ApiClient(API_BASE_URL);
 
 // Offline storage fallback
 const STORAGE_KEY = 'reelsmith-tasks-offline';
