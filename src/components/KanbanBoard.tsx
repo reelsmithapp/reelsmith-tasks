@@ -7,6 +7,8 @@ import { Task, Filters, KanbanData, ColumnId } from '../types';
 import { getInitialData } from '../utils/initialData';
 import { api, saveOffline, loadOffline } from '../services/api';
 import { FiPlus, FiFilm, FiWifiOff, FiRefreshCw } from 'react-icons/fi';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 export const KanbanBoard: React.FC = () => {
   const [data, setData] = useState<KanbanData>(getInitialData);
@@ -31,13 +33,13 @@ export const KanbanBoard: React.FC = () => {
   const loadTasks = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await api.getTasks();
-      
+
       if (response.success && response.data) {
         const tasks = response.data;
-        
+
         // Organize tasks into columns
         const columns = [
           {
@@ -65,12 +67,12 @@ export const KanbanBoard: React.FC = () => {
             tasks: tasks.filter(t => t.status === 'blocked'),
           },
         ];
-        
+
         setData({
           columns,
           lastUpdated: new Date().toISOString(),
         });
-        
+
         // Save to offline storage as backup
         saveOffline(tasks);
         setIsOnline(true);
@@ -79,7 +81,7 @@ export const KanbanBoard: React.FC = () => {
       console.error('Failed to load tasks from API:', err);
       setError('Failed to connect to server. Loading offline data...');
       setIsOnline(false);
-      
+
       // Fallback to offline data
       const offlineTasks = loadOffline();
       if (offlineTasks && offlineTasks.length > 0) {
@@ -109,7 +111,7 @@ export const KanbanBoard: React.FC = () => {
             tasks: offlineTasks.filter(t => t.status === 'blocked'),
           },
         ];
-        
+
         setData({
           columns,
           lastUpdated: new Date().toISOString(),
@@ -197,7 +199,7 @@ export const KanbanBoard: React.FC = () => {
       if (editingTask) {
         // Update existing task
         const response = await api.updateTask(editingTask.id, taskData);
-        
+
         if (response.success && response.data) {
           // Reload tasks to get fresh data
           await loadTasks();
@@ -211,9 +213,9 @@ export const KanbanBoard: React.FC = () => {
           status: taskData.status || 'backlog',
           createdAt: new Date().toISOString(),
         } as Omit<Task, 'id' | 'createdAt' | 'updatedAt'>;
-        
+
         const response = await api.createTask(newTaskData);
-        
+
         if (response.success && response.data) {
           // Reload tasks to get fresh data
           await loadTasks();
@@ -230,7 +232,7 @@ export const KanbanBoard: React.FC = () => {
     if (confirm('Are you sure you want to delete this task?')) {
       try {
         await api.deleteTask(taskId);
-        
+
         // Optimistic update
         const newColumns = data.columns.map(column => ({
           ...column,
@@ -316,19 +318,21 @@ export const KanbanBoard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dark-500">
+    <div className="min-h-screen bg-obsidian">
       {/* Header */}
-      <div className="bg-dark-300 border-b border-gray-800 sticky top-0 z-40">
+      <div className="bg-obsidian-elevated border-b border-frost-5 sticky top-0 z-40">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <FiFilm size={32} className="text-primary-500" />
+              <div className="w-10 h-10 rounded-lg bg-gradient-brand flex items-center justify-center">
+                <FiFilm size={24} className="text-obsidian" />
+              </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">ReelSmith Tasks</h1>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   Full-Stack Task Management
                   {!isOnline && (
-                    <span className="ml-2 inline-flex items-center gap-1 text-yellow-400">
+                    <span className="ml-2 inline-flex items-center gap-1 text-inferno-400">
                       <FiWifiOff size={14} /> Offline Mode
                     </span>
                   )}
@@ -337,28 +341,30 @@ export const KanbanBoard: React.FC = () => {
             </div>
             <div className="flex items-center gap-3">
               {!isOnline && (
-                <button
+                <Button
+                  variant="secondary"
                   onClick={loadTasks}
-                  className="btn-secondary flex items-center gap-2"
                   disabled={isLoading}
+                  className="flex items-center gap-2"
                 >
                   <FiRefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
                   Retry Connection
-                </button>
+                </Button>
               )}
-              <button
+              <Button
+                variant="gradient"
                 onClick={() => {
                   setEditingTask(undefined);
                   setModalInitialColumn('backlog');
                   setIsModalOpen(true);
                 }}
-                className="btn-primary flex items-center gap-2"
                 disabled={isLoading}
+                className="flex items-center gap-2"
               >
                 <FiPlus size={18} />
                 New Task
-                <span className="text-xs opacity-70">(Ctrl+N)</span>
-              </button>
+                <kbd className="ml-1 text-xs opacity-70 bg-obsidian/30 px-1.5 py-0.5 rounded">Ctrl+N</kbd>
+              </Button>
             </div>
           </div>
         </div>
@@ -366,25 +372,29 @@ export const KanbanBoard: React.FC = () => {
 
       {/* Error Banner */}
       {error && (
-        <div className="bg-yellow-900/30 border-b border-yellow-700 px-6 py-3">
-          <div className="container mx-auto flex items-center justify-between">
-            <p className="text-sm text-yellow-300">{error}</p>
-            <button
+        <Card variant="default" className="mx-6 mt-4 bg-inferno-900/30 border-inferno-700">
+          <div className="p-3 flex items-center justify-between">
+            <p className="text-sm text-inferno-300">{error}</p>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setError(null)}
-              className="text-yellow-400 hover:text-yellow-300"
+              className="text-inferno-400 hover:text-inferno-300"
             >
               Dismiss
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Loading State */}
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <FiRefreshCw size={32} className="animate-spin text-primary-500 mx-auto mb-4" />
-            <p className="text-gray-400">Loading tasks...</p>
+            <div className="w-12 h-12 rounded-full bg-gradient-brand animate-pulse mx-auto mb-4 flex items-center justify-center">
+              <FiRefreshCw size={24} className="animate-spin text-obsidian" />
+            </div>
+            <p className="text-muted-foreground">Loading tasks...</p>
           </div>
         </div>
       )}
@@ -409,27 +419,27 @@ export const KanbanBoard: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="flex gap-2 mb-6">
-            <button
+            <Button
+              variant="secondary"
               onClick={handleExportJSON}
-              className="btn-secondary"
               disabled={isLoading}
             >
               Export JSON
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
               onClick={handleExportMarkdown}
-              className="btn-secondary"
               disabled={isLoading}
             >
               Export Markdown
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
               onClick={handleArchiveCompleted}
-              className="btn-secondary"
               disabled={isLoading}
             >
               Archive Completed
-            </button>
+            </Button>
           </div>
 
           {/* Kanban Board */}

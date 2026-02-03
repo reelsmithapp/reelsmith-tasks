@@ -2,16 +2,234 @@
 @tailwind components;
 @tailwind utilities;
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@layer base {
+  :root {
+    /* === REELSMITH THERMAL GRADIENT THEME === */
+
+    /* Core Brand Colors */
+    --color-inferno-orange: #ffad00;
+    --color-plasma-violet: #8f00ff;
+
+    /* Inferno Scale */
+    --color-inferno-50: #fff9e6;
+    --color-inferno-100: #ffefb3;
+    --color-inferno-200: #ffe580;
+    --color-inferno-300: #ffdb4d;
+    --color-inferno-400: #ffd11a;
+    --color-inferno-500: #ffad00;
+    --color-inferno-600: #e69900;
+    --color-inferno-700: #b37700;
+    --color-inferno-800: #805500;
+    --color-inferno-900: #4d3300;
+
+    /* Plasma Scale */
+    --color-plasma-50: #f5e6ff;
+    --color-plasma-100: #e0b3ff;
+    --color-plasma-200: #cc80ff;
+    --color-plasma-300: #b84dff;
+    --color-plasma-400: #a31aff;
+    --color-plasma-500: #8f00ff;
+    --color-plasma-600: #7300cc;
+    --color-plasma-700: #5c00a3;
+    --color-plasma-800: #460080;
+    --color-plasma-900: #30005c;
+
+    /* Obsidian Backgrounds */
+    --color-obsidian: #050508;
+    --color-obsidian-elevated: #0a0a0f;
+    --color-obsidian-surface: #0f0f15;
+    --color-obsidian-hover: #15151d;
+
+    /* Glass Frost (for glassmorphism) */
+    --glass-frost-5: rgba(255, 255, 255, 0.05);
+    --glass-frost-10: rgba(255, 255, 255, 0.1);
+    --glass-frost-15: rgba(255, 255, 255, 0.15);
+    --glass-frost-20: rgba(255, 255, 255, 0.2);
+
+    /* Glass Accent Glows */
+    --glass-orange-glow: rgba(255, 173, 0, 0.15);
+    --glass-violet-glow: rgba(143, 0, 255, 0.15);
+
+    /* Text Colors */
+    --color-text-primary: #ffffff;
+    --color-text-secondary: rgba(255, 255, 255, 0.7);
+    --color-text-tertiary: rgba(255, 255, 255, 0.5);
+    --color-text-muted: rgba(255, 255, 255, 0.3);
+
+    /* Semantic Colors */
+    --color-success: #00ff88;
+    --color-success-muted: rgba(0, 255, 136, 0.2);
+    --color-warning: #ffad00;
+    --color-warning-muted: rgba(255, 173, 0, 0.2);
+    --color-error: #ff4d4d;
+    --color-error-muted: rgba(255, 77, 77, 0.2);
+    --color-info: #00c4cc;
+    --color-info-muted: rgba(0, 196, 204, 0.2);
+
+    /* Badge Colors */
+    --badge-character: #8f00ff;
+    --badge-product: #ffad00;
+    --badge-setting: #00c4cc;
+    --badge-style: #ff00aa;
+    --badge-before: #ff4d00;
+    --badge-after: #00ff88;
+
+    /* Gradients */
+    --gradient-brand: linear-gradient(135deg, #ffad00 0%, #8f00ff 100%);
+    --gradient-brand-horizontal: linear-gradient(90deg, #ffad00 0%, #8f00ff 100%);
+
+    /* Spacing/Radius */
+    --radius: 0.75rem;
+
+    /* === SHADCN CSS VARIABLE MAPPINGS === */
+    --background: 240 6% 2%;
+    --foreground: 0 0% 100%;
+
+    --card: 240 10% 4%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 42 100% 50%;
+    --primary-foreground: 240 6% 2%;
+
+    --secondary: 270 100% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 240 6% 10%;
+    --muted-foreground: 0 0% 70%;
+
+    --accent: 270 100% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 65%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 100%;
+    --input: 0 0% 100%;
+    --ring: 42 100% 50%;
+  }
+
+  * {
+    @apply border-border/10;
+  }
+
+  body {
+    @apply bg-obsidian text-foreground;
+    font-family: "Satoshi", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
-body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Glassmorphism Utilities */
+@layer components {
+  .glass-panel {
+    background: var(--glass-frost-10);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid var(--glass-frost-5);
+    border-radius: var(--radius);
+  }
+
+  .glass-panel-elevated {
+    background: var(--glass-frost-15);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid var(--glass-frost-10);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  .btn-gradient {
+    background: var(--gradient-brand);
+    color: var(--color-obsidian);
+    font-weight: 600;
+  }
+
+  .btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 40px rgba(255, 173, 0, 0.3);
+  }
+}
+
+/* ReelSmith Animations */
+@layer utilities {
+  @keyframes crystallize {
+    0% {
+      opacity: 0;
+      filter: blur(20px);
+      transform: scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      filter: blur(0);
+      transform: scale(1);
+    }
+  }
+
+  @keyframes ambient-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 20px var(--glass-orange-glow);
+    }
+    50% {
+      box-shadow:
+        0 0 40px var(--glass-orange-glow),
+        0 0 60px var(--glass-violet-glow);
+    }
+  }
+
+  @keyframes fluid-fill {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-up {
+    0% {
+      transform: translateY(10px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-crystallize {
+    animation: crystallize 0.4s ease-out forwards;
+  }
+
+  .animate-ambient-pulse {
+    animation: ambient-pulse 3s ease-in-out infinite;
+  }
+
+  .animate-fluid-fill {
+    background: linear-gradient(90deg, #ffad00 0%, #8f00ff 50%, #ffad00 100%);
+    background-size: 200% 100%;
+    animation: fluid-fill 2s linear infinite;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out forwards;
+  }
 }
 
 /* Scrollbar Styling */
@@ -21,16 +239,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0e17;
+  background: var(--color-obsidian);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--glass-frost-20);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--glass-frost-15);
 }
 
 /* Line clamp utility */
@@ -51,6 +269,9 @@ kbd {
   display: inline-block;
   padding: 2px 6px;
   font-size: 10px;
-  font-family: monospace;
+  font-family: "JetBrains Mono", monospace;
   border-radius: 3px;
+  background: var(--glass-frost-10);
+  border: 1px solid var(--glass-frost-5);
+  color: var(--color-text-secondary);
 }

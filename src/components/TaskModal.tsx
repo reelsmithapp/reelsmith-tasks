@@ -1,6 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { FiX } from 'react-icons/fi';
 import { Task, TaskStatus, TaskPriority, TaskCategory, Assignee } from '../types';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -65,36 +82,25 @@ export const TaskModal: React.FC<TaskModalPropsLegacy> = ({ isOpen, onClose, onS
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-reel-gray-light rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-reel-gray">
-          <h2 className="text-2xl font-semibold text-white">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl">
             {editingTask ? 'Edit Task' : 'New Task'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-reel-gray rounded-lg text-gray-400 hover:text-white transition-colors"
-          >
-            <FiX size={24} />
-          </button>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Title <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
+          <div className="space-y-2">
+            <Label htmlFor="title">
+              Title <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors"
               placeholder="Enter task title..."
               required
               autoFocus
@@ -102,14 +108,12 @@ export const TaskModal: React.FC<TaskModalPropsLegacy> = ({ isOpen, onClose, onS
           </div>
 
           {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Description
-            </label>
-            <textarea
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors resize-none"
               placeholder="Add a description... (Markdown supported)"
               rows={4}
             />
@@ -117,102 +121,88 @@ export const TaskModal: React.FC<TaskModalPropsLegacy> = ({ isOpen, onClose, onS
 
           {/* Status and Priority */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Status
-              </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors"
-              >
-                <option value="backlog">📋 Backlog</option>
-                <option value="in-progress">🔄 In Progress</option>
-                <option value="done">✅ Done</option>
-                <option value="blocked">⏸️ Blocked/Waiting</option>
-              </select>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="backlog">Backlog</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="done">Done</SelectItem>
+                  <SelectItem value="blocked">Blocked/Waiting</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Priority
-              </label>
-              <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value as TaskPriority)}
-                className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors"
-              >
-                <option value="high">🔴 High</option>
-                <option value="medium">🟡 Medium</option>
-                <option value="low">🟢 Low</option>
-              </select>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           {/* Category and Assignee */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Category
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as TaskCategory)}
-                className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors"
-              >
-                <option value="marketing">Marketing</option>
-                <option value="product">Product</option>
-                <option value="research">Research</option>
-                <option value="automation">Automation</option>
-              </select>
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Select value={category} onValueChange={(v) => setCategory(v as TaskCategory)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="marketing">Marketing</SelectItem>
+                  <SelectItem value="product">Product</SelectItem>
+                  <SelectItem value="research">Research</SelectItem>
+                  <SelectItem value="automation">Automation</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Assignee
-              </label>
-              <select
-                value={assignee}
-                onChange={(e) => setAssignee(e.target.value as Assignee)}
-                className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors"
-              >
-                <option value="Arun">Arun</option>
-                <option value="Arc">Arc</option>
-              </select>
+            <div className="space-y-2">
+              <Label>Assignee</Label>
+              <Select value={assignee} onValueChange={(v) => setAssignee(v as Assignee)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Arun">Arun</SelectItem>
+                  <SelectItem value="Arc">Arc</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           {/* Due Date */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Due Date
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="dueDate">Due Date</Label>
+            <Input
+              id="dueDate"
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full bg-reel-gray border border-reel-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-reel-blue-light transition-colors"
             />
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="submit"
-              className="flex-1 bg-reel-blue-light hover:bg-reel-blue-bright text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              {initialTask ? 'Update Task' : 'Create Task'}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 bg-reel-gray hover:bg-reel-gray-light text-gray-300 font-medium py-2 rounded-lg transition-colors"
-            >
+          <DialogFooter className="gap-3 pt-4">
+            <Button type="button" variant="secondary" onClick={onClose}>
               Cancel
-            </button>
-          </div>
+            </Button>
+            <Button type="submit" variant="gradient">
+              {editingTask ? 'Update Task' : 'Create Task'}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

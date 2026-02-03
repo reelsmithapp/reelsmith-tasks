@@ -1,6 +1,16 @@
 import React from 'react';
 import { FiSearch, FiFilter, FiX } from 'react-icons/fi';
 import { FilterState } from '../types';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface FilterBarProps {
   filter: FilterState;
@@ -16,76 +26,78 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filter, onFilterChange, on
     filter.search !== '';
 
   return (
-    <div className="bg-reel-gray rounded-lg p-4 mb-6">
-      <div className="flex items-center gap-3 mb-3">
-        <FiFilter className="text-gray-400" size={20} />
-        <h3 className="text-white font-medium">Filters</h3>
-        {hasActiveFilters && (
-          <button
-            onClick={onClearFilters}
-            className="ml-auto text-xs text-gray-400 hover:text-white flex items-center gap-1 transition-colors"
-          >
-            <FiX size={14} />
-            Clear all
-          </button>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Search */}
-        <div className="relative lg:col-span-2">
-          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-          <input
-            type="text"
-            value={filter.search}
-            onChange={(e) => onFilterChange('search', e.target.value)}
-            placeholder="Search tasks..."
-            className="w-full bg-reel-gray-light border border-reel-gray-light rounded-lg pl-10 pr-4 py-2 text-white text-sm focus:outline-none focus:border-reel-blue-light transition-colors"
-          />
+    <Card variant="glass" className="mb-6">
+      <CardContent className="p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <FiFilter className="text-muted-foreground" size={20} />
+          <h3 className="text-white font-medium">Filters</h3>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClearFilters}
+              className="ml-auto text-xs text-muted-foreground hover:text-white"
+            >
+              <FiX size={14} className="mr-1" />
+              Clear all
+            </Button>
+          )}
         </div>
 
-        {/* Priority Filter */}
-        <div>
-          <select
-            value={filter.priority}
-            onChange={(e) => onFilterChange('priority', e.target.value)}
-            className="w-full bg-reel-gray-light border border-reel-gray-light rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-reel-blue-light transition-colors"
-          >
-            <option value="all">All Priorities</option>
-            <option value="high">High Priority</option>
-            <option value="medium">Medium Priority</option>
-            <option value="low">Low Priority</option>
-          </select>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Search */}
+          <div className="relative lg:col-span-2">
+            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground z-10" size={16} />
+            <Input
+              value={filter.search}
+              onChange={(e) => onFilterChange('search', e.target.value)}
+              placeholder="Search tasks..."
+              className="pl-10"
+            />
+          </div>
 
-        {/* Category Filter */}
-        <div>
-          <select
-            value={filter.category}
-            onChange={(e) => onFilterChange('category', e.target.value)}
-            className="w-full bg-reel-gray-light border border-reel-gray-light rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-reel-blue-light transition-colors"
-          >
-            <option value="all">All Categories</option>
-            <option value="marketing">Marketing</option>
-            <option value="product">Product</option>
-            <option value="research">Research</option>
-            <option value="automation">Automation</option>
-          </select>
-        </div>
+          {/* Priority Filter */}
+          <Select value={filter.priority} onValueChange={(value) => onFilterChange('priority', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="All Priorities" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Priorities</SelectItem>
+              <SelectItem value="high">High Priority</SelectItem>
+              <SelectItem value="medium">Medium Priority</SelectItem>
+              <SelectItem value="low">Low Priority</SelectItem>
+            </SelectContent>
+          </Select>
 
-        {/* Assignee Filter - Hidden on mobile, shown on larger screens */}
-        <div className="hidden md:block md:col-span-2 lg:col-span-1">
-          <select
-            value={filter.assignee}
-            onChange={(e) => onFilterChange('assignee', e.target.value)}
-            className="w-full bg-reel-gray-light border border-reel-gray-light rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-reel-blue-light transition-colors"
-          >
-            <option value="all">All Assignees</option>
-            <option value="Arun">Arun</option>
-            <option value="Arc">Arc</option>
-          </select>
+          {/* Category Filter */}
+          <Select value={filter.category} onValueChange={(value) => onFilterChange('category', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="marketing">Marketing</SelectItem>
+              <SelectItem value="product">Product</SelectItem>
+              <SelectItem value="research">Research</SelectItem>
+              <SelectItem value="automation">Automation</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Assignee Filter - Hidden on mobile, shown on larger screens */}
+          <div className="hidden md:block md:col-span-2 lg:col-span-1">
+            <Select value={filter.assignee} onValueChange={(value) => onFilterChange('assignee', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Assignees" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Assignees</SelectItem>
+                <SelectItem value="Arun">Arun</SelectItem>
+                <SelectItem value="Arc">Arc</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
