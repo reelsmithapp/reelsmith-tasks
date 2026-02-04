@@ -98,7 +98,7 @@ export const TaskModal: React.FC<TaskModalPropsLegacy> = ({ isOpen, onClose, onS
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto max-sm:top-0 max-sm:translate-y-0 max-sm:rounded-t-none max-sm:max-h-screen max-sm:h-[calc(100vh-env(safe-area-inset-bottom))]">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto sm:left-[50%] sm:right-auto sm:translate-x-[-50%] max-sm:top-0 max-sm:translate-y-0 max-sm:rounded-t-none max-sm:max-h-screen max-sm:h-[calc(100vh-env(safe-area-inset-bottom))]">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <DialogTitle className="text-2xl flex-1">
