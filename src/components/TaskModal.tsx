@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FiCopy, FiCheck } from 'react-icons/fi';
+import { FiCopy, FiCheck, FiX } from 'react-icons/fi';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -98,34 +99,47 @@ export const TaskModal: React.FC<TaskModalPropsLegacy> = ({ isOpen, onClose, onS
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto sm:left-[50%] sm:right-auto sm:translate-x-[-50%] max-sm:top-0 max-sm:translate-y-0 max-sm:rounded-t-none max-sm:max-h-screen max-sm:h-[calc(100vh-env(safe-area-inset-bottom))]">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto sm:left-[50%] sm:right-auto sm:translate-x-[-50%] max-sm:top-0 max-sm:translate-y-0 max-sm:rounded-t-none max-sm:max-h-screen max-sm:h-[calc(100vh-env(safe-area-inset-bottom))] [&>button]:hidden">
         <DialogHeader>
-          <div className="flex items-start justify-between">
+          <div className="flex items-center justify-between gap-2">
             <DialogTitle className="text-2xl flex-1">
               {editingTask ? 'Edit Task' : 'New Task'}
             </DialogTitle>
-            {editingTask && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleCopyTaskId}
-                className="flex-shrink-0 -mt-1 -mr-2"
-                title="Copy task ID"
-              >
-                {copied ? (
-                  <>
-                    <FiCheck className="h-4 w-4 mr-1" />
-                    <span className="text-xs">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <FiCopy className="h-4 w-4 mr-1" />
-                    <span className="text-xs hidden sm:inline">Copy ID</span>
-                  </>
-                )}
-              </Button>
-            )}
+            <div className="flex items-center gap-1">
+              {editingTask && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyTaskId}
+                  className="flex-shrink-0"
+                  title="Copy task ID"
+                >
+                  {copied ? (
+                    <>
+                      <FiCheck className="h-4 w-4 mr-1" />
+                      <span className="text-xs">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <FiCopy className="h-4 w-4 mr-1" />
+                      <span className="text-xs hidden sm:inline">Copy ID</span>
+                    </>
+                  )}
+                </Button>
+              )}
+              <DialogClose asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="flex-shrink-0 h-9 w-9 p-0"
+                  title="Close"
+                >
+                  <FiX className="h-5 w-5" />
+                </Button>
+              </DialogClose>
+            </div>
           </div>
         </DialogHeader>
 
