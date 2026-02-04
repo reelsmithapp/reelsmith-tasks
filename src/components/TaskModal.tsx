@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { FiCopy, FiCheck } from 'react-icons/fi';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ export const TaskModal: React.FC<TaskModalPropsLegacy> = ({ isOpen, onClose, onS
   const [category, setCategory] = useState<TaskCategory>('product');
   const [assignee, setAssignee] = useState<Assignee>('Arun');
   const [dueDate, setDueDate] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (editingTask) {
@@ -63,6 +65,18 @@ export const TaskModal: React.FC<TaskModalPropsLegacy> = ({ isOpen, onClose, onS
     }
   }, [editingTask, initialColumnId, isOpen]);
 
+  const handleCopyTaskId = async () => {
+    if (!editingTask?.id) return;
+    
+    try {
+      await navigator.clipboard.writeText(editingTask.id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy task ID:', err);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -84,11 +98,35 @@ export const TaskModal: React.FC<TaskModalPropsLegacy> = ({ isOpen, onClose, onS
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto max-sm:top-0 max-sm:translate-y-0 max-sm:rounded-t-none max-sm:max-h-screen max-sm:h-[calc(100vh-env(safe-area-inset-bottom))]">
         <DialogHeader>
-          <DialogTitle className="text-2xl">
-            {editingTask ? 'Edit Task' : 'New Task'}
-          </DialogTitle>
+          <div className="flex items-start justify-between">
+            <DialogTitle className="text-2xl flex-1">
+              {editingTask ? 'Edit Task' : 'New Task'}
+            </DialogTitle>
+            {editingTask && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleCopyTaskId}
+                className="flex-shrink-0 -mt-1 -mr-2"
+                title="Copy task ID"
+              >
+                {copied ? (
+                  <>
+                    <FiCheck className="h-4 w-4 mr-1" />
+                    <span className="text-xs">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <FiCopy className="h-4 w-4 mr-1" />
+                    <span className="text-xs hidden sm:inline">Copy ID</span>
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
