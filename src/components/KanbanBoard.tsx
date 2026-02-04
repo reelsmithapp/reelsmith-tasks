@@ -465,7 +465,14 @@ export const KanbanBoard: React.FC = () => {
 
           {/* Kanban Board - Touch-friendly scrolling */}
           <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-6 -mx-3 px-3 sm:mx-0 sm:px-0 snap-x snap-mandatory touch-pan-x">
+            <div 
+              className="flex gap-3 sm:gap-4 overflow-x-auto pb-6 -mx-3 px-3 sm:mx-0 sm:px-0 snap-x snap-mandatory"
+              style={{ 
+                touchAction: 'pan-x pan-y',
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehaviorX: 'contain'
+              }}
+            >
               {filteredData.columns.map(column => (
                 <Column
                   key={column.id}
